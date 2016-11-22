@@ -7,8 +7,8 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import ua.com.smiddle.cti.io.proxy.core.model.Log;
-import ua.com.smiddle.cti.io.proxy.core.pool.LogQueue;
+import ua.com.smiddle.emulator.core.model.Log;
+import ua.com.smiddle.emulator.core.pool.LogQueue;
 
 import javax.annotation.PostConstruct;
 import java.time.LocalDateTime;

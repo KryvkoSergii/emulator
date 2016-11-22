@@ -7,10 +7,10 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import ua.com.smiddle.cti.io.proxy.core.model.Log;
-import ua.com.smiddle.cti.io.proxy.core.util.LoggerUtil;
-import ua.com.smiddle.cti.io.proxy.core.util.SettingsUtil;
+import ua.com.smiddle.emulator.core.model.Log;
 import ua.com.smiddle.emulator.core.services.LogPersister;
+import ua.com.smiddle.emulator.core.util.LoggerUtil;
+import ua.com.smiddle.emulator.core.util.SettingsUtil;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;

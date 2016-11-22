@@ -6,6 +6,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.*;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import ua.com.smiddle.emulator.core.services.Processor;
+import ua.com.smiddle.emulator.core.services.Transport;
 
 import java.util.concurrent.Executor;
 
@@ -15,7 +17,7 @@ import java.util.concurrent.Executor;
 @SpringBootApplication
 @Configuration
 @EnableAutoConfiguration
-@ComponentScan(basePackages = "ua.com.smiddle.cti.io.proxy.core")
+@ComponentScan(basePackages = "ua.com.smiddle.emulator.core")
 @PropertySource("classpath:application.properties")
 public class Application {
 
@@ -32,6 +34,18 @@ public class Application {
         executor.setThreadNamePrefix("EventSenderThread-");
         executor.initialize();
         return executor;
+    }
+
+    @Bean(name = "Transport")
+    @Scope(value = "prototype")
+    public Transport getTransport() {
+       return new Transport();
+    }
+
+    @Bean(name = "Processor")
+    @Scope(value = "prototype")
+    public Processor processor() {
+        return new Processor();
     }
 
 }
