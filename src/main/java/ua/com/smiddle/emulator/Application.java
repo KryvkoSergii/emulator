@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.*;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-import ua.com.smiddle.emulator.core.services.Processor;
+import ua.com.smiddle.emulator.core.model.ServerDescriptor;
 import ua.com.smiddle.emulator.core.services.Transport;
 
 import java.util.concurrent.Executor;
@@ -42,10 +42,10 @@ public class Application {
        return new Transport();
     }
 
-    @Bean(name = "Processor")
+    @Bean(name = "ServerDescriptor")
     @Scope(value = "prototype")
-    public Processor processor() {
-        return new Processor();
+    public ServerDescriptor clientConnection() {
+        return new ServerDescriptor();
     }
 
 }

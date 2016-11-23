@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Description;
 import org.springframework.context.annotation.Scope;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
+import ua.com.smiddle.emulator.core.model.ServerDescriptor;
 import ua.com.smiddle.emulator.core.util.LoggerUtil;
 
 import javax.annotation.PostConstruct;
@@ -30,22 +31,30 @@ public class ServerListener extends Thread {
     @Autowired
     @Qualifier("LoggerUtil")
     private LoggerUtil logger;
+    @Autowired
+    @Qualifier("Pools")
+    private Pools pool;
 
-    @PostConstruct
-    private void init(){
-        logger.logAnyway(module,"initialized...");
-        start();
-    }
-
+    //Constructors
     public ServerListener() {
 
     }
+
+
+    //Methods
+    @PostConstruct
+    private void init() {
+        logger.logAnyway(module, "initialized...");
+        start();
+    }
+
 
     @Override
     public void run() {
         ServerSocket ss;
         try {
             ss = new ServerSocket(Integer.valueOf(env.getProperty("connection.listener.port")).intValue());
+            logger.logAnyway(module, "waiting for connection on " + ss.getLocalPort());
             while (!isInterrupted())
                 acceptingConnection(ss.accept());
         } catch (IOException e) {
@@ -54,8 +63,8 @@ public class ServerListener extends Thread {
     }
 
     private void acceptingConnection(Socket s) {
-        Processor pr = context.getBean(Processor.class);
-        pr.setSocket(s);
-        pr.start();
+        ServerDescriptor pr = context.getBean(ServerDescriptor.class);
+        pr.buildTransport(s);
+        pool.getSubscribers().add(pr);
     }
 }

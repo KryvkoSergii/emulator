@@ -77,7 +77,7 @@ public class Transport extends Thread {
 
     @Override
     public void run() {
-        logger.logAnyway(module, "started");
+        logger.logAnyway(module, "started with " + socket.getRemoteSocketAddress());
         try (InputStream is = socket.getInputStream();
              OutputStream os = socket.getOutputStream()) {
             byte[] length = new byte[4];
