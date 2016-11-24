@@ -26,6 +26,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Optional;
 
 /**
  * @author srg on 22.11.16.
@@ -67,8 +68,8 @@ public class Processor extends Thread {
         while (!isInterrupted()) {
             for (ServerDescriptor sd : pool.getSubscribers()) {
                 processIncomingMessages(sd);
-                if (sd.getTransport().getSocket().isClosed())
-                    sd.getTransport().destroy();
+//                 if (sd.getTransport().getSocket().isClosed())
+//                    sd.getTransport().destroy();
             }
         }
     }
@@ -127,7 +128,7 @@ public class Processor extends Thread {
                 case CTI.MSG_CLOSE_REQ: {
                     CloseReq closeReq = CloseReq.deserializeMessage(inputMessage);
                     logger.logMore_1(module, directionIn + closeReq.toString());
-                    processCloseReq(closeReq,sd);
+                    processCloseReq(closeReq, sd);
                     break;
                 }
                 case CTI.MSG_MONITOR_START_REQ: {
@@ -187,19 +188,20 @@ public class Processor extends Thread {
         setAgentStateConf.setInvokeID(setAgentStateReq.getInvokeID());
         transport.getOutput().add(setAgentStateConf.serializeMessage());
         logger.logMore_1(module, directionOut + "processMSG_SET_AGENT_STATE_REQ: prepared " + setAgentStateConf);
-        agentStateEventProcessor.getAgentEventQueue().add(new AgentEvent(tmpAgent,sd));
+        agentStateEventProcessor.getAgentEventQueue().add(new AgentEvent(tmpAgent, sd));
     }
 
     private void updateAgentInPools(AgentDescriptor tmpAgent) {
+        System.out.println(tmpAgent.toString());
         Integer monitorID = pool.getMonitorsHolder().get(tmpAgent.getAgentInstrument());
         if (monitorID != null)
             tmpAgent.setMonitorID(monitorID);
-
         if (tmpAgent.getAgentInstrument() != null) {
             if (pool.getInstrumentMapping().containsKey(tmpAgent.getAgentInstrument())) {
                 AgentDescriptor a = pool.getInstrumentMapping().get(tmpAgent.getAgentInstrument());
                 a.setAgentInstrument(tmpAgent.getAgentInstrument());
-                a.setAgentID(tmpAgent.getAgentID());
+                if (tmpAgent.getAgentID() != null)
+                    a.setAgentID(tmpAgent.getAgentID());
                 if (tmpAgent.getMonitorID() != null)
                     a.setMonitorID(tmpAgent.getMonitorID());
                 a.setState(tmpAgent.getState());
@@ -257,10 +259,21 @@ public class Processor extends Thread {
         monitorStartConf.setMonitorId(monitorID);
         transport.getOutput().add(monitorStartConf.serializeMessage());
         logger.logMore_1(module, directionOut + "processMONITOR_START_REQ: prepared " + monitorStartConf);
-        /**
-         * Доработать мониторы
-         */
-
+        String instrument;
+        for (FloatingField ff : monitorStartReq.getFloatingFields()) {
+            if (ff.getTag() == Fields.TAG_MONITORED_DEVID_TAG.getTagId()) {
+                //создает monitorId в пуле
+                instrument = ff.getData();
+                pool.getMonitorsHolder().put(instrument, monitorID);
+                logger.logMore_2(module, "add monitorId=" + monitorID + " to instrument=" + instrument);
+                //порверяет и добавляет monitorId агенту
+                AgentDescriptor ad = pool.getInstrumentMapping().get(instrument);
+                if (ad != null) {
+                    ad.setMonitorID(monitorID);
+                    logger.logMore_2(module, "add monitorId=" + monitorID + " to AgentId=" + ad.getAgentID());
+                }
+            }
+        }
     }
 
     private void processMONITOR_STOP_REQ(Object message, ServerDescriptor sd) throws Exception {
@@ -270,9 +283,24 @@ public class Processor extends Thread {
         monitorStopConf.setInvokeId(monitorStopReq.getInvokeId());
         transport.getOutput().add(monitorStopConf.serializeMessage());
         logger.logMore_1(module, directionOut + "processMONITOR_STOP_REQ: prepared " + monitorStopConf);
-        /**
-         * Доработать удаление мониторов
-         */
+
+        //находит и удаляет монитор в AgentID, удаляет запись
+        try {
+            String instrument = findMonitorIDinPool(monitorStopReq.getMonitorId());
+            pool.getInstrumentMapping().get(instrument).setMonitorID(null);
+            pool.getMonitorsHolder().remove(instrument);
+            logger.logMore_1(module, "processMONITOR_STOP_REQ: removed MonitorId=" + monitorStopReq.getMonitorId() + " for instrument=" + instrument);
+        } catch (Exception e) {
+            logger.logMore_1(module, "processMONITOR_STOP_REQ: request but not found for MonitorId=" + monitorStopReq.getMonitorId());
+        }
+    }
+
+    private String findMonitorIDinPool(Integer monitorId) throws Exception {
+        Optional<String> instrument = pool.getMonitorsHolder().entrySet().stream()
+                .filter(map -> monitorId.equals(map.getValue()))
+                .map(map -> map.getKey())
+                .findAny();
+        return instrument.get();
     }
 
     private void processQUERY_AGENT_STATE_REQ(Object message, ServerDescriptor sd) throws Exception {

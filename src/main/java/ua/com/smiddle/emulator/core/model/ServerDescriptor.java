@@ -117,4 +117,18 @@ public class ServerDescriptor {
     public void destroy() {
 
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("ServerDescriptor{");
+        sb.append("ClientID='").append(ClientID).append('\'');
+        sb.append(", ClientPassword='").append(ClientPassword).append('\'');
+        sb.append(", idleTimeout=").append(idleTimeout);
+        sb.append(", serviceMask=").append(serviceMask);
+        sb.append(", callMsgMask=").append(callMsgMask);
+        sb.append(", agentStateMask=").append(agentStateMask);
+        sb.append(", monitoringID=").append(monitoringID);
+        sb.append('}');
+        return sb.toString();
+    }
 }

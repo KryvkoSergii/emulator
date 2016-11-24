@@ -1,9 +1,13 @@
 package ua.com.smiddle.emulator.core.services;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Scope;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import ua.com.smiddle.emulator.core.model.AgentDescriptor;
 import ua.com.smiddle.emulator.core.model.ServerDescriptor;
+import ua.com.smiddle.emulator.core.util.LoggerUtil;
 
 import java.util.Map;
 import java.util.Set;
@@ -17,16 +21,19 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Service("Pools")
 @Scope("singleton")
 public class Pools {
-
-    Set<ServerDescriptor> subscribers = ConcurrentHashMap.newKeySet();
+    private final String module = "Pools";
+    @Autowired
+    @Qualifier("LoggerUtil")
+    private LoggerUtil logger;
+    private Set<ServerDescriptor> subscribers = ConcurrentHashMap.newKeySet();
     //<MonitoringID,ServerDescriptor> OPEN_REQ
-    Map<Integer, ServerDescriptor> clientConnectionHolder = new ConcurrentHashMap();
+    private Map<Integer, ServerDescriptor> clientConnectionHolder = new ConcurrentHashMap();
     //<AgentInstrument,MonitorID> MONITOR_START_REQ
-    Map<String, Integer> monitorsHolder = new ConcurrentHashMap();
+    private Map<String, Integer> monitorsHolder = new ConcurrentHashMap();
     //<AgentInstrument,ServerDescriptor>
-    Map<String, AgentDescriptor> instrumentMapping = new ConcurrentHashMap();
+    private Map<String, AgentDescriptor> instrumentMapping = new ConcurrentHashMap();
     //<AgentID,ServerDescriptor>
-    Map<String, AgentDescriptor> agentMapping = new ConcurrentHashMap();
+    private Map<String, AgentDescriptor> agentMapping = new ConcurrentHashMap();
     private AtomicInteger monitoringID = new AtomicInteger(1);
     //<MonitorID,ServerDescriptor> MONITOR_START_REQ
     private AtomicInteger monitorID = new AtomicInteger(1);
@@ -37,16 +44,16 @@ public class Pools {
         return clientConnectionHolder;
     }
 
+    public void setClientConnectionHolder(Map<Integer, ServerDescriptor> clientConnectionHolder) {
+        this.clientConnectionHolder = clientConnectionHolder;
+    }
+
     public AtomicInteger getMonitoringID() {
         return monitoringID;
     }
 
     public void setMonitoringID(AtomicInteger monitoringID) {
         this.monitoringID = monitoringID;
-    }
-
-    public void setClientConnectionHolder(Map<Integer, ServerDescriptor> clientConnectionHolder) {
-        this.clientConnectionHolder = clientConnectionHolder;
     }
 
     public Map<String, AgentDescriptor> getInstrumentMapping() {
@@ -87,5 +94,32 @@ public class Pools {
 
     public void setSubscribers(Set<ServerDescriptor> subscribers) {
         this.subscribers = subscribers;
+    }
+
+
+    //Methods
+    @Scheduled(initialDelay = 5 * 1000, fixedDelay = 5 * 1000)
+    private void getPoolsState() {
+        String s1 = "", s2 = "", s3 = "", s4 = "";
+        if (agentMapping.size() > 0)
+            s1 = " agentMapping=" + agentMapping.entrySet().stream().map(map ->
+                    map.getValue().toString()).reduce(" ", String::concat);
+        logger.logMore_1(module, "getPoolsState: agentMapping size=" + agentMapping.size() + s1);
+
+        if (instrumentMapping.size() > 0)
+            s2 = " instrumentMapping=" + instrumentMapping.entrySet().stream().map(map ->
+                    map.getValue().toString()).reduce(" ", String::concat);
+        logger.logMore_1(module, "getPoolsState: instrumentMapping size=" + instrumentMapping.size() + s2);
+
+        if (monitorsHolder.size() > 0)
+            s3 = " monitorsHolder=" + monitorsHolder.entrySet().stream().map(map ->
+                    map.toString()).reduce(" ", String::concat);
+        logger.logMore_1(module, "getPoolsState: monitorsHolder size=" + monitorsHolder.size() + s3);
+
+        if (subscribers.size() > 0)
+            s4 = " subscribers=" + subscribers.stream().map(map ->
+                    map.toString()).reduce(" ", String::concat);
+        logger.logMore_1(module, "getPoolsState: subscribers size=" + subscribers.size() + s4);
+
     }
 }
