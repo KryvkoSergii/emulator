@@ -93,7 +93,6 @@ public class Transport extends Thread {
     private void read(InputStream is, byte[] length) throws IOException {
         if (is.available() > 0) {
             is.read(length);
-            System.out.println(Arrays.toString(length));
             byte[] messagePart = new byte[ByteBuffer.wrap(length).getInt() + 4];
             is.read(messagePart);
             ByteBuffer buffer = ByteBuffer.allocate(length.length + messagePart.length);
