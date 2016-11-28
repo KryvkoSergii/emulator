@@ -5,6 +5,7 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.*;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import ua.com.smiddle.emulator.core.model.ServerDescriptor;
@@ -19,6 +20,7 @@ import java.util.concurrent.Executor;
 @Configuration
 @EnableAutoConfiguration
 @EnableScheduling
+@EnableAsync
 @ComponentScan(basePackages = "ua.com.smiddle.emulator.core")
 @PropertySource("classpath:application.properties")
 public class Application {
@@ -41,7 +43,7 @@ public class Application {
     @Bean(name = "Transport")
     @Scope(value = "prototype")
     public Transport getTransport() {
-       return new Transport();
+        return new Transport();
     }
 
     @Bean(name = "ServerDescriptor")

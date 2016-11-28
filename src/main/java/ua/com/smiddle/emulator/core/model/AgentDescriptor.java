@@ -2,11 +2,14 @@ package ua.com.smiddle.emulator.core.model;
 
 import ua.com.smiddle.cti.messages.model.messages.agent_events.AgentStates;
 
+import java.io.Serializable;
+
 /**
  * @author srg on 22.11.16.
  * @project emulator
  */
-public class AgentDescriptor {
+public class AgentDescriptor implements Serializable{
+    static final long serialVersionUID = 42L;
     private AgentStates state;
     private String AgentID;
     private String AgentPassword;
