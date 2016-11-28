@@ -1,5 +1,7 @@
 package ua.com.smiddle.emulator.core.model;
 
+import ua.com.smiddle.emulator.AgentDescriptor;
+
 /**
  * @author srg on 23.11.16.
  * @project emulator

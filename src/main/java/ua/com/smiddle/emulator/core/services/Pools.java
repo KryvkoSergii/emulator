@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Scope;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import ua.com.smiddle.emulator.core.model.AgentDescriptor;
+import ua.com.smiddle.emulator.AgentDescriptor;
 import ua.com.smiddle.emulator.core.model.ServerDescriptor;
 import ua.com.smiddle.emulator.core.util.LoggerUtil;
 

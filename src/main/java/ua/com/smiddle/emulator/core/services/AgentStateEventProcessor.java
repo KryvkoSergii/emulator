@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 import ua.com.smiddle.cti.messages.model.messages.agent_events.AgentStateEvent;
 import ua.com.smiddle.cti.messages.model.messages.agent_events.AgentStates;
 import ua.com.smiddle.cti.messages.model.messages.common.PeripheralTypes;
-import ua.com.smiddle.emulator.core.model.AgentDescriptor;
+import ua.com.smiddle.emulator.AgentDescriptor;
 import ua.com.smiddle.emulator.core.model.AgentEvent;
 import ua.com.smiddle.emulator.core.model.UnknownFields;
 import ua.com.smiddle.emulator.core.util.LoggerUtil;

@@ -13,8 +13,8 @@ import ua.com.smiddle.cti.messages.model.messages.miscellaneous.ConfigRequestEve
 import ua.com.smiddle.cti.messages.model.messages.miscellaneous.ConfigRequestKeyEvent;
 import ua.com.smiddle.cti.messages.model.messages.miscellaneous.PGStatusCodes;
 import ua.com.smiddle.cti.messages.model.messages.session_management.*;
+import ua.com.smiddle.emulator.AgentDescriptor;
 import ua.com.smiddle.emulator.core.exception.EmulatorException;
-import ua.com.smiddle.emulator.core.model.AgentDescriptor;
 import ua.com.smiddle.emulator.core.model.AgentEvent;
 import ua.com.smiddle.emulator.core.model.ServerDescriptor;
 import ua.com.smiddle.emulator.core.model.UnknownFields;

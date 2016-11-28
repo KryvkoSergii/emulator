@@ -29,6 +29,11 @@
             <artifactId>CTI-MESSAGES</artifactId>
             <version>1.0</version>
         </dependency>
+        <dependency>
+            <groupId>ua.com.smiddle</groupId>
+            <artifactId>cti_emulator_model</artifactId>
+            <version>1.0</version>
+        </dependency>
     </dependencies>
 
     <build>
