@@ -297,8 +297,10 @@ public class Processor extends Thread {
         //находит и удаляет монитор в AgentID, удаляет запись
         try {
             String instrument = findMonitorIDinPool(monitorStopReq.getMonitorId());
+            //очистка InstrumentMapping пула
             AgentDescriptor ad = pool.getInstrumentMapping().get(instrument);
             if (ad != null) ad.setMonitorID(null);
+            //очистка MonitorsHolder пула
             pool.getMonitorsHolder().remove(instrument);
             logger.logMore_1(module, "processMONITOR_STOP_REQ: removed MonitorId=" + monitorStopReq.getMonitorId() + " for instrument=" + instrument);
         } catch (Exception e) {
