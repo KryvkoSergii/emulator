@@ -48,7 +48,6 @@ public class ServerListener extends Thread {
         start();
     }
 
-
     @Override
     public void run() {
         ServerSocket ss;
@@ -66,5 +65,6 @@ public class ServerListener extends Thread {
         ServerDescriptor pr = context.getBean(ServerDescriptor.class);
         pr.buildTransport(s);
         pool.getSubscribers().add(pr);
+        logger.logAnyway(module, "Created new ServerDescriptor for=" + s.getRemoteSocketAddress());
     }
 }

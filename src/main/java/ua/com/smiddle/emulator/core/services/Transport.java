@@ -24,6 +24,9 @@ public class Transport extends Thread {
     private Queue<byte[]> input;
     private Queue<byte[]> output;
     private Socket socket;
+    private int errorCount = 0;
+    private boolean isDone;
+    private long lastIncommingMessage;
     @Autowired
     @Qualifier("LoggerUtil")
     private LoggerUtil logger;
@@ -68,6 +71,18 @@ public class Transport extends Thread {
         this.socket = socket;
     }
 
+    public boolean isDone() {
+        return isDone;
+    }
+
+    public void setDone(boolean done) {
+        isDone = done;
+    }
+
+    public long getLastIncommingMessage() {
+        return lastIncommingMessage;
+    }
+
 
     //Methods
     @PostConstruct
@@ -81,10 +96,17 @@ public class Transport extends Thread {
         try (InputStream is = socket.getInputStream();
              OutputStream os = socket.getOutputStream()) {
             byte[] length = new byte[4];
-            while (!isInterrupted()) {
-                read(is, length);
-                write(os);
+            while (!isInterrupted() && errorCount <= 5) {
+                try {
+                    read(is, length);
+                    write(os);
+                } catch (IOException e) {
+                    logger.logAnyway(module, "run: write/read messages for=" + socket.getRemoteSocketAddress() + " throw Exception=" + e.getMessage());
+                    errorCount++;
+                }
             }
+            isDone = true;
+            destroy();
         } catch (IOException e) {
             logger.logAnyway(module, e.getMessage());
         }
@@ -92,6 +114,7 @@ public class Transport extends Thread {
 
     private void read(InputStream is, byte[] length) throws IOException {
         if (is.available() > 0) {
+            lastIncommingMessage = System.currentTimeMillis();
             is.read(length);
             byte[] messagePart = new byte[ByteBuffer.wrap(length).getInt() + 4];
             is.read(messagePart);
@@ -120,7 +143,7 @@ public class Transport extends Thread {
             try {
                 write(socket.getOutputStream());
             } catch (IOException e) {
-                logger.logAnyway("module", "destroy: throw Exception=" + e.getMessage());
+                logger.logAnyway(module, "destroy: writing messages to socket throw Exception=" + e.getMessage());
             }
         }
         try {
@@ -128,7 +151,7 @@ public class Transport extends Thread {
             socket.getOutputStream().close();
             socket.close();
         } catch (IOException e) {
-            logger.logAnyway("module", "destroy: throw Exception=" + e.getMessage());
+            logger.logAnyway(module, "destroy: closing throw Exception=" + e.getMessage());
         }
     }
 

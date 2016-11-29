@@ -23,10 +23,7 @@ import ua.com.smiddle.emulator.core.util.LoggerUtil;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * @author srg on 22.11.16.
@@ -66,12 +63,26 @@ public class Processor extends Thread {
     public void run() {
         logger.logAnyway(module, "started...");
         while (!isInterrupted()) {
-            for (ServerDescriptor sd : pool.getSubscribers()) {
-                processIncomingMessages(sd);
-//                 if (sd.getTransport().getSocket().isClosed())
-//                    sd.getTransport().destroy();
+            for (Iterator iterator = pool.getSubscribers().iterator(); iterator.hasNext(); ) {
+                ServerDescriptor sd = (ServerDescriptor) iterator.next();
+                if (!sd.getTransport().isDone() && checkTimeOut(sd))
+                    processIncomingMessages(sd);
+                else {
+                    sd.destroy();
+                    logger.logAnyway(module, "Removing ServerDescriptor " + sd.getClientID());
+                    pool.getSubscribers().remove(sd);
+                }
             }
         }
+    }
+
+    private boolean checkTimeOut(ServerDescriptor sd) {
+        //not started yet
+        if (sd.getIdleTimeout() == 0) return true;
+        //already started
+        if (System.currentTimeMillis() - sd.getTransport().getLastIncommingMessage() < (sd.getIdleTimeout() * 1000)) {
+            return true;
+        } else return false;
     }
 
     private void processIncomingMessages(ServerDescriptor sd) {
@@ -192,7 +203,6 @@ public class Processor extends Thread {
     }
 
     private void updateAgentInPools(AgentDescriptor tmpAgent) {
-        System.out.println(tmpAgent.toString());
         Integer monitorID = pool.getMonitorsHolder().get(tmpAgent.getAgentInstrument());
         if (monitorID != null)
             tmpAgent.setMonitorID(monitorID);

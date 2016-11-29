@@ -40,7 +40,7 @@ public class Application {
         return executor;
     }
 
-    @Bean(name = "Transport")
+    @Bean(name = "Transport", destroyMethod = "destroy")
     @Scope(value = "prototype")
     public Transport getTransport() {
         return new Transport();

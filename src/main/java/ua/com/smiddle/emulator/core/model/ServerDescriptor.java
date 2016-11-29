@@ -115,7 +115,7 @@ public class ServerDescriptor {
 
     @PreDestroy
     public void destroy() {
-
+        transport.destroy();
     }
 
     @Override

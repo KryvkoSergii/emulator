@@ -70,7 +70,7 @@ public class RemoteMonitorService extends Thread {
                     e.printStackTrace();
                 }
             });
-        } else System.out.println("empty...");
+        }
     }
 
 

@@ -41,7 +41,7 @@ public class LogFilePersister implements LogPersister {
     private String fileAbsolutePath;
     private RandomAccessFile raFile;
     private Date currentDate;
-    private String fileNamePrefix = "finesse-connector-";
+    private String fileNamePrefix = "cti-emulator";
     private String newPath;
 
 
