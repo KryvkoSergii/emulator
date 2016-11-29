@@ -124,12 +124,16 @@ public class AgentStateEventProcessor extends Thread {
     }
 
     public void removeAgentInPools(AgentDescriptor tmpAgent) {
+        AgentDescriptor inPools = null;
         if (tmpAgent.getAgentInstrument() != null)
-            pool.getInstrumentMapping().remove(tmpAgent.getAgentInstrument());
-        if (tmpAgent.getAgentID() != null)
+            inPools = pool.getInstrumentMapping().remove(tmpAgent.getAgentInstrument());
+        if (inPools != null) pool.getAgentMapping().remove(inPools.getAgentID());
+        else if (tmpAgent.getAgentID() != null)
             pool.getAgentMapping().remove(tmpAgent.getAgentID());
 //        if (tmpAgent.getMonitorID() != null)
 //            pool.getMonitorsHolder().remove(tmpAgent.getMonitorID());
         logger.logMore_2(module, "removed for=" + tmpAgent.getAgentID() + " " + tmpAgent.getAgentInstrument());
     }
+
+
 }

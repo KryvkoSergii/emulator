@@ -301,7 +301,7 @@ public class Processor extends Thread {
             pool.getMonitorsHolder().remove(instrument);
             logger.logMore_1(module, "processMONITOR_STOP_REQ: removed MonitorId=" + monitorStopReq.getMonitorId() + " for instrument=" + instrument);
         } catch (Exception e) {
-            logger.logMore_1(module, "processMONITOR_STOP_REQ: request but not found for MonitorId=" + monitorStopReq.getMonitorId());
+            logger.logMore_1(module, "processMONITOR_STOP_REQ: request but not found for MonitorId=" + monitorStopReq.getMonitorId() + " throw Exception=" + e.getMessage());
         }
     }
 
