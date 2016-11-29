@@ -293,7 +293,6 @@ public class Processor extends Thread {
         monitorStopConf.setInvokeId(monitorStopReq.getInvokeId());
         transport.getOutput().add(monitorStopConf.serializeMessage());
         logger.logMore_1(module, directionOut + "processMONITOR_STOP_REQ: prepared " + monitorStopConf);
-
         //находит и удаляет монитор в AgentID, удаляет запись
         try {
             String instrument = findMonitorIDinPool(monitorStopReq.getMonitorId());
