@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import ua.com.smiddle.cti.messages.model.messages.CTI;
 import ua.com.smiddle.cti.messages.model.messages.agent_events.*;
 import ua.com.smiddle.cti.messages.model.messages.calls.AnswerCallReq;
+import ua.com.smiddle.cti.messages.model.messages.calls.ClearCallReq;
 import ua.com.smiddle.cti.messages.model.messages.common.Fields;
 import ua.com.smiddle.cti.messages.model.messages.common.FloatingField;
 import ua.com.smiddle.cti.messages.model.messages.common.PeripheralTypes;
@@ -101,7 +102,12 @@ public class Processor extends Thread {
                 case CTI.MSG_ANSWER_CALL_REQ:{
                     AnswerCallReq answerCallReq = AnswerCallReq.deserializeMessage(inputMessage);
                     logger.logMore_1(module, directionIn + answerCallReq.toString());
-                    callsProcessor.processMSG_ANSWER_CALL_REQ(answerCallReq);
+                    callsProcessor.processAnswerCallReq(answerCallReq, sd);
+                }
+                case CTI.MSG_CLEAR_CALL_REQ:{
+                    ClearCallReq clearCallReq = ClearCallReq.deserializeMessage(inputMessage);
+                    logger.logMore_1(module, directionIn + clearCallReq.toString());
+                    callsProcessor.processClearCallReq(clearCallReq, sd);
                 }
                 case CTI.MSG_HEARTBEAT_REQ: {
                     HeartbeatReq heartbeatReq = HeartbeatReq.deserializeMessage(inputMessage);

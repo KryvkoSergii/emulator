@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import ua.com.smiddle.emulator.AgentDescriptor;
+import ua.com.smiddle.emulator.core.model.CallDescriptor;
 import ua.com.smiddle.emulator.core.model.ServerDescriptor;
 import ua.com.smiddle.emulator.core.util.LoggerUtil;
 
@@ -28,6 +29,8 @@ public class Pools {
     private Set<ServerDescriptor> subscribers = ConcurrentHashMap.newKeySet();
     //<MonitoringID,ServerDescriptor> OPEN_REQ
     private Map<Integer, ServerDescriptor> clientConnectionHolder = new ConcurrentHashMap();
+    //<MonitoringID,ServerDescriptor> OPEN_REQ
+    private Map<Integer, CallDescriptor> callsHolder = new ConcurrentHashMap();
     //<AgentInstrument,MonitorID> MONITOR_START_REQ
     private Map<String, Integer> monitorsHolder = new ConcurrentHashMap();
     //<AgentInstrument,ServerDescriptor>
@@ -96,6 +99,13 @@ public class Pools {
         this.subscribers = subscribers;
     }
 
+    public Map<Integer, CallDescriptor> getCallsHolder() {
+        return callsHolder;
+    }
+
+    public void setCallsHolder(Map<Integer, CallDescriptor> callsHolder) {
+        this.callsHolder = callsHolder;
+    }
 
     //Methods
     @Scheduled(initialDelay = 5 * 1000, fixedDelay = 5 * 1000)

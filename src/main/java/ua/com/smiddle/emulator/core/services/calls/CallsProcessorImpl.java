@@ -7,16 +7,13 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import ua.com.smiddle.cti.messages.model.messages.agent_events.AgentStates;
 import ua.com.smiddle.cti.messages.model.messages.calls.*;
-import ua.com.smiddle.cti.messages.model.messages.calls.events.BeginCallEvent;
-import ua.com.smiddle.cti.messages.model.messages.calls.events.CallDeliveredEvent;
+import ua.com.smiddle.cti.messages.model.messages.calls.events.*;
 import ua.com.smiddle.cti.messages.model.messages.common.Fields;
 import ua.com.smiddle.cti.messages.model.messages.common.FloatingField;
 import ua.com.smiddle.cti.messages.model.messages.common.PeripheralTypes;
 import ua.com.smiddle.cti.messages.model.messages.miscellaneous.EventDeviceTypes;
 import ua.com.smiddle.emulator.AgentDescriptor;
-import ua.com.smiddle.emulator.core.model.AgentEvent;
-import ua.com.smiddle.emulator.core.model.ServerDescriptor;
-import ua.com.smiddle.emulator.core.model.UnknownFields;
+import ua.com.smiddle.emulator.core.model.*;
 import ua.com.smiddle.emulator.core.services.AgentStateEventProcessor;
 import ua.com.smiddle.emulator.core.services.Pools;
 import ua.com.smiddle.emulator.core.util.LoggerUtil;
@@ -32,6 +29,8 @@ import java.util.Collection;
 @Description("Supports call sending")
 public class CallsProcessorImpl implements CallsProcessor {
     private final String module = "CallsProcessorImpl";
+    private final String directionIn = "CTI-Client -> CTI: ";
+    private final String directionOut = "CTI-Client <- CTI: ";
     @Autowired
     @Qualifier("LoggerUtil")
     private LoggerUtil logger;
@@ -48,15 +47,18 @@ public class CallsProcessorImpl implements CallsProcessor {
         for (AgentDescriptor ad : agents) {
             try {
                 if (ad.getState() != AgentStates.AGENT_STATE_AVAILABLE) continue;
+                pool.getCallsHolder().put(connectionCallId, new CallDescriptor(connectionCallId, ad, CallState.NONE_CALL));
                 //установка клиентского сотояния
                 ad.setState(AgentStates.AGENT_STATE_RESERVED);
                 stateEventProcessor.getAgentEventQueue().add(new AgentEvent(ad, sd));
                 //звонки
                 BeginCallEvent beginCallEvent = prepareBeginCallEvent(connectionCallId, ad);
                 sd.getTransport().getOutput().add(beginCallEvent.serializeMessage());
-                logger.logMore_1(module,);
+                logger.logMore_1(module, directionOut + beginCallEvent.toString());
                 CallDeliveredEvent callDeliveredEvent = prepareCallDeliveredEvent(connectionCallId, ad);
                 sd.getTransport().getOutput().add(callDeliveredEvent.serializeMessage());
+                pool.getCallsHolder().get(connectionCallId).setCallState(CallState.DELIVERED_CALL);
+                logger.logMore_1(module, directionOut + callDeliveredEvent.toString());
                 break;
             } catch (Exception e) {
                 logger.logAnyway(module, "processIncomingACDCall: for agent=" + ad.getAgentID() + " throw Exception=" + e.getMessage());
@@ -65,9 +67,66 @@ public class CallsProcessorImpl implements CallsProcessor {
     }
 
     @Async(value = "processCalls")
-    public void processMSG_ANSWER_CALL_REQ(AnswerCallReq req) {
+    public void processAnswerCallReq(AnswerCallReq req, ServerDescriptor sd) throws Exception {
+        CallDescriptor cd = pool.getCallsHolder().get(req.getConnectionCallID());
+        AgentDescriptor ad = cd.getAgentDescriptor();
 
+        AnswerCallConf answerCallConf = new AnswerCallConf(req.getInvokeId());
+        sd.getTransport().getOutput().add(answerCallConf.serializeMessage());
+        logger.logMore_1(module, directionOut + answerCallConf.toString());
 
+        ad.setState(AgentStates.AGENT_STATE_TALKING);
+        stateEventProcessor.getAgentEventQueue().add(new AgentEvent(ad, sd));
+
+        CallDataUpdateEvent callDataUpdateEvent = prepareCallDataUpdateEvent(req.getConnectionCallID(), pool.getCallsHolder().get(req.getConnectionCallID()).getAgentDescriptor());
+        sd.getTransport().getOutput().add(callDataUpdateEvent.serializeMessage());
+        logger.logMore_1(module, directionOut + callDataUpdateEvent.toString());
+
+        CallEstablishedEvent callEstablishedEvent = prepareCallEstablishedEvent(req.getConnectionCallID(), pool.getCallsHolder().get(req.getConnectionCallID()).getAgentDescriptor());
+        sd.getTransport().getOutput().add(callDataUpdateEvent.serializeMessage());
+        logger.logMore_1(module, directionOut + callEstablishedEvent.toString());
+        cd.setCallState(CallState.ACTIVE_CALL);
+    }
+
+    @Async(value = "processCalls")
+    public void processClearCallReq(ClearCallReq req, ServerDescriptor sd) throws Exception {
+        CallDescriptor cd = pool.getCallsHolder().get(req.getConnectionCallID());
+        AgentDescriptor ad = cd.getAgentDescriptor();
+
+        ClearCallConf clearCallConf = new ClearCallConf(req.getInvokeId());
+        sd.getTransport().getOutput().add(clearCallConf.serializeMessage());
+        logger.logMore_1(module, directionOut + clearCallConf.toString());
+
+        CallClearedEvent callClearedEvent = prepareCallClearedEvent(req.getConnectionCallID(), ad);
+        sd.getTransport().getOutput().add(clearCallConf.serializeMessage());
+        logger.logMore_1(module, directionOut + callClearedEvent.toString());
+
+        ad.setState(AgentStates.AGENT_STATE_AVAILABLE);
+        stateEventProcessor.getAgentEventQueue().add(new AgentEvent(ad, sd));
+
+        EndCallEvent endCallEvent = prepareEndCallEvent(req.getConnectionCallID(), ad);
+        sd.getTransport().getOutput().add(endCallEvent.serializeMessage());
+        logger.logMore_1(module, directionOut + callClearedEvent.toString());
+    }
+
+    private EndCallEvent prepareEndCallEvent(int connectionCallId, AgentDescriptor ad) {
+        EndCallEvent c = new EndCallEvent();
+        return c;
+    }
+
+    private CallClearedEvent prepareCallClearedEvent(int connectionCallId, AgentDescriptor ad) {
+        CallClearedEvent c = new CallClearedEvent();
+        return c;
+    }
+
+    private CallEstablishedEvent prepareCallEstablishedEvent(int connectionCallId, AgentDescriptor ad) {
+        CallEstablishedEvent c = new CallEstablishedEvent();
+        return c;
+    }
+
+    private CallDataUpdateEvent prepareCallDataUpdateEvent(int connectionCallId, AgentDescriptor ad) {
+        CallDataUpdateEvent c = new CallDataUpdateEvent();
+        return c;
     }
 
     private CallDeliveredEvent prepareCallDeliveredEvent(int connectionCallId, AgentDescriptor ad) {
