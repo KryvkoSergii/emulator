@@ -6,10 +6,7 @@ import org.springframework.context.annotation.Description;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import ua.com.smiddle.cti.messages.model.messages.agent_events.AgentStates;
-import ua.com.smiddle.cti.messages.model.messages.calls.CallTypes;
-import ua.com.smiddle.cti.messages.model.messages.calls.ConnectionDeviceIDTypes;
-import ua.com.smiddle.cti.messages.model.messages.calls.EventCause;
-import ua.com.smiddle.cti.messages.model.messages.calls.LineTypes;
+import ua.com.smiddle.cti.messages.model.messages.calls.*;
 import ua.com.smiddle.cti.messages.model.messages.calls.events.BeginCallEvent;
 import ua.com.smiddle.cti.messages.model.messages.calls.events.CallDeliveredEvent;
 import ua.com.smiddle.cti.messages.model.messages.common.Fields;
@@ -33,7 +30,7 @@ import java.util.Collection;
  */
 @Service("CallsProcessorImpl")
 @Description("Supports call sending")
-public class CallsProcessorImpl {
+public class CallsProcessorImpl implements CallsProcessor {
     private final String module = "CallsProcessorImpl";
     @Autowired
     @Qualifier("LoggerUtil")
@@ -46,9 +43,8 @@ public class CallsProcessorImpl {
     private AgentStateEventProcessor stateEventProcessor;
 
     @Async(value = "processCalls")
-    public void processIncomingCall(int connectionCallId, ServerDescriptor sd) {
+    public void processIncomingACDCall(int connectionCallId, ServerDescriptor sd) {
         Collection<AgentDescriptor> agents = pool.getAgentMapping().values();
-
         for (AgentDescriptor ad : agents) {
             try {
                 if (ad.getState() != AgentStates.AGENT_STATE_AVAILABLE) continue;
@@ -56,47 +52,54 @@ public class CallsProcessorImpl {
                 ad.setState(AgentStates.AGENT_STATE_RESERVED);
                 stateEventProcessor.getAgentEventQueue().add(new AgentEvent(ad, sd));
                 //звонки
-                BeginCallEvent beginCallEvent = prepareBeginCallEvent(connectionCallId, ad, sd);
+                BeginCallEvent beginCallEvent = prepareBeginCallEvent(connectionCallId, ad);
                 sd.getTransport().getOutput().add(beginCallEvent.serializeMessage());
-
-                CallDeliveredEvent c = new CallDeliveredEvent();
-                c.setMonitorId(connectionCallId);
-                c.setPeripheralId(UnknownFields.PeripheralID);
-                c.setPeripheralType(PeripheralTypes.PT_SIEMENS_9006);
-                c.setConnectionDeviceIDType(ConnectionDeviceIDTypes.CONNECTION_ID_STATIC);
-                c.setConnectionCallID(connectionCallId);
-                c.setLineHandle(UnknownFields.LineHandle);
-                c.setLineType(LineTypes.LINETYPE_INBOUND_ACD);
-                c.setServiceNumber(UnknownFields.ServiceNumber);
-                c.setServiceID(UnknownFields.ServiceNumber);
-                c.setSkillGroupNumber(UnknownFields.SkillGroupNumber);
-                c.setSkillGroupID(UnknownFields.SkillGroupID);
-                c.setSkillGroupPriority(UnknownFields.SkillGroupPriority);
-                c.setAlertingDeviceType(EventDeviceTypes.AGENT_DEVICE);
-                c.setCallingDeviceType(EventDeviceTypes.DEVICE_IDENTIFIER);
-                c.setCalledDeviceType(EventDeviceTypes.DEVICE_IDENTIFIER);
-                c.setLastRedirectDeviceType(EventDeviceTypes.DEVICE_IDENTIFIER);
-                c.setEventCause(EventCause.CEC_INVALID_ACCOUNT_CODE);
-                c.setNumNamedVariables(UnknownFields.NumNamedVariables);
-                c.setNumNamedArrays(UnknownFields.NumNamedArrays);
-
-                c.setFloatingFields(new ArrayList<>());
-
-                c.getFloatingFields().add(new FloatingField(Fields.TAG_CONNECTION_DEVID.getTagId(), UnknownFields.ANI));
-                c.getFloatingFields().add(new FloatingField(Fields.TAG_ANI.getTagId(), UnknownFields.ANI));
-                c.getFloatingFields().add(new FloatingField(Fields.TAG_DNIS.getTagId(), ad.getAgentInstrument()));
-                c.getFloatingFields().add(new FloatingField(Fields.TAG_DIALED_NUMBER.getTagId(), UnknownFields.IVR));
-
+                logger.logMore_1(module,);
+                CallDeliveredEvent callDeliveredEvent = prepareCallDeliveredEvent(connectionCallId, ad);
+                sd.getTransport().getOutput().add(callDeliveredEvent.serializeMessage());
+                break;
             } catch (Exception e) {
-                logger.logAnyway(module, "processIncomingCall: for agent=" + ad.getAgentID() + " throw Exception=" + e.getMessage());
+                logger.logAnyway(module, "processIncomingACDCall: for agent=" + ad.getAgentID() + " throw Exception=" + e.getMessage());
             }
-
         }
+    }
+
+    @Async(value = "processCalls")
+    public void processMSG_ANSWER_CALL_REQ(AnswerCallReq req) {
 
 
     }
 
-    private BeginCallEvent prepareBeginCallEvent(int connectionCallId, AgentDescriptor ad, ServerDescriptor sd) {
+    private CallDeliveredEvent prepareCallDeliveredEvent(int connectionCallId, AgentDescriptor ad) {
+        CallDeliveredEvent c = new CallDeliveredEvent();
+        c.setMonitorId(connectionCallId);
+        c.setPeripheralId(UnknownFields.PeripheralID);
+        c.setPeripheralType(PeripheralTypes.PT_SIEMENS_9006);
+        c.setConnectionDeviceIDType(ConnectionDeviceIDTypes.CONNECTION_ID_STATIC);
+        c.setConnectionCallID(connectionCallId);
+        c.setLineHandle(UnknownFields.LineHandle);
+        c.setLineType(LineTypes.LINETYPE_INBOUND_ACD);
+        c.setServiceNumber(UnknownFields.ServiceNumber);
+        c.setServiceID(UnknownFields.ServiceNumber);
+        c.setSkillGroupNumber(UnknownFields.SkillGroupNumber);
+        c.setSkillGroupID(UnknownFields.SkillGroupID);
+        c.setSkillGroupPriority(UnknownFields.SkillGroupPriority);
+        c.setAlertingDeviceType(EventDeviceTypes.AGENT_DEVICE);
+        c.setCallingDeviceType(EventDeviceTypes.DEVICE_IDENTIFIER);
+        c.setCalledDeviceType(EventDeviceTypes.DEVICE_IDENTIFIER);
+        c.setLastRedirectDeviceType(EventDeviceTypes.DEVICE_IDENTIFIER);
+        c.setEventCause(EventCause.CEC_INVALID_ACCOUNT_CODE);
+        c.setNumNamedVariables(UnknownFields.NumNamedVariables);
+        c.setNumNamedArrays(UnknownFields.NumNamedArrays);
+        c.setFloatingFields(new ArrayList<>());
+        c.getFloatingFields().add(new FloatingField(Fields.TAG_CONNECTION_DEVID.getTagId(), UnknownFields.ANI));
+        c.getFloatingFields().add(new FloatingField(Fields.TAG_ALERTING_DEVID.getTagId(), ad.getAgentInstrument()));
+        c.getFloatingFields().add(new FloatingField(Fields.TAG_CALLING_DEVID.getTagId(), UnknownFields.ANI));
+        c.getFloatingFields().add(new FloatingField(Fields.TAG_CALLED_DEVID.getTagId(), ad.getAgentInstrument()));
+        return c;
+    }
+
+    private BeginCallEvent prepareBeginCallEvent(int connectionCallId, AgentDescriptor ad) {
         BeginCallEvent c = new BeginCallEvent();
         c.setMonitorId(ad.getMonitorID());
         c.setPeripheralId(UnknownFields.PeripheralID);
@@ -109,7 +112,6 @@ public class CallsProcessorImpl {
         c.setConnectionCallID(connectionCallId);
         c.setCalledPartyDisposition(UnknownFields.CalledPartyDisposition);
         c.setFloatingFields(new ArrayList<>());
-
         c.getFloatingFields().add(new FloatingField(Fields.TAG_CONNECTION_DEVID.getTagId(), UnknownFields.ANI));
         c.getFloatingFields().add(new FloatingField(Fields.TAG_ANI.getTagId(), UnknownFields.ANI));
         c.getFloatingFields().add(new FloatingField(Fields.TAG_DNIS.getTagId(), ad.getAgentInstrument()));

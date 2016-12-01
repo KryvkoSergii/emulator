@@ -6,6 +6,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 import ua.com.smiddle.cti.messages.model.messages.CTI;
 import ua.com.smiddle.cti.messages.model.messages.agent_events.*;
+import ua.com.smiddle.cti.messages.model.messages.calls.AnswerCallReq;
 import ua.com.smiddle.cti.messages.model.messages.common.Fields;
 import ua.com.smiddle.cti.messages.model.messages.common.FloatingField;
 import ua.com.smiddle.cti.messages.model.messages.common.PeripheralTypes;
@@ -18,6 +19,7 @@ import ua.com.smiddle.emulator.core.exception.EmulatorException;
 import ua.com.smiddle.emulator.core.model.AgentEvent;
 import ua.com.smiddle.emulator.core.model.ServerDescriptor;
 import ua.com.smiddle.emulator.core.model.UnknownFields;
+import ua.com.smiddle.emulator.core.services.calls.CallsProcessor;
 import ua.com.smiddle.emulator.core.util.LoggerUtil;
 
 import javax.annotation.PostConstruct;
@@ -45,6 +47,9 @@ public class Processor extends Thread {
     @Autowired
     @Qualifier("AgentStateEventProcessor")
     private AgentStateEventProcessor agentStateEventProcessor;
+    @Autowired
+    @Qualifier("CallsProcessorImpl")
+    private CallsProcessor callsProcessor;
 
 
     //Constructor
@@ -93,6 +98,11 @@ public class Processor extends Thread {
             ByteBuffer buffer = ByteBuffer.wrap(inputMessage, 4, 8);
             int code = buffer.getInt();
             switch (code) {
+                case CTI.MSG_ANSWER_CALL_REQ:{
+                    AnswerCallReq answerCallReq = AnswerCallReq.deserializeMessage(inputMessage);
+                    logger.logMore_1(module, directionIn + answerCallReq.toString());
+                    callsProcessor.processMSG_ANSWER_CALL_REQ(answerCallReq);
+                }
                 case CTI.MSG_HEARTBEAT_REQ: {
                     HeartbeatReq heartbeatReq = HeartbeatReq.deserializeMessage(inputMessage);
                     logger.logMore_2(module, directionIn + heartbeatReq.toString());
