@@ -107,6 +107,9 @@ public class CallsProcessorImpl implements CallsProcessor {
         EndCallEvent endCallEvent = prepareEndCallEvent(req.getConnectionCallID(), ad);
         sd.getTransport().getOutput().add(endCallEvent.serializeMessage());
         logger.logMore_1(module, directionOut + callClearedEvent.toString());
+
+        cd.setCallState(CallState.CLEARED_CALL);
+        removeCalls(cd.getConnectionCallID());
     }
 
     private EndCallEvent prepareEndCallEvent(int connectionCallId, AgentDescriptor ad) {
@@ -176,6 +179,18 @@ public class CallsProcessorImpl implements CallsProcessor {
         c.getFloatingFields().add(new FloatingField(Fields.TAG_DNIS.getTagId(), ad.getAgentInstrument()));
         c.getFloatingFields().add(new FloatingField(Fields.TAG_DIALED_NUMBER.getTagId(), UnknownFields.IVR));
         return c;
+    }
+
+    /**
+     * add statistic
+     * @param connectionCallId
+     */
+    private void removeCalls(int connectionCallId) {
+        CallDescriptor cd = pool.getCallsHolder().remove(connectionCallId);
+        if (cd != null)
+            logger.logMore_1(module, "removeCalls: removed call=" + connectionCallId
+                    + " state=" + cd.getCallState() + " agent=" + cd.getAgentDescriptor().getAgentID());
+        else logger.logMore_1(module, "removeCalls: call id=" + connectionCallId + " not exists");
     }
 
 
