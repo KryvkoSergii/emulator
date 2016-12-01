@@ -1,4 +1,4 @@
-package ua.com.smiddle.emulator.core.services;
+package ua.com.smiddle.emulator.core.services.remote.access;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -6,6 +6,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import ua.com.smiddle.emulator.AgentDescriptor;
 import ua.com.smiddle.emulator.core.model.remorte.monitoring.RemoteMonitorDescriptor;
+import ua.com.smiddle.emulator.core.services.Pools;
 import ua.com.smiddle.emulator.core.util.LoggerUtil;
 
 import javax.annotation.PostConstruct;
