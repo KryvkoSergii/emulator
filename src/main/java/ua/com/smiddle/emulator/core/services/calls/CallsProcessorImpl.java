@@ -14,8 +14,8 @@ import ua.com.smiddle.cti.messages.model.messages.common.PeripheralTypes;
 import ua.com.smiddle.cti.messages.model.messages.miscellaneous.EventDeviceTypes;
 import ua.com.smiddle.emulator.AgentDescriptor;
 import ua.com.smiddle.emulator.core.model.*;
-import ua.com.smiddle.emulator.core.services.AgentStateEventProcessor;
 import ua.com.smiddle.emulator.core.services.Pools;
+import ua.com.smiddle.emulator.core.services.agentstates.AgentStateProcessor;
 import ua.com.smiddle.emulator.core.util.LoggerUtil;
 
 import java.util.ArrayList;
@@ -26,7 +26,7 @@ import java.util.Collection;
  * @project emulator
  */
 @Service("CallsProcessorImpl")
-@Description("Supports call sending")
+@Description("Supports call messages processing and adding to transport queues")
 public class CallsProcessorImpl implements CallsProcessor {
     private final String module = "CallsProcessorImpl";
     private final String directionIn = "CTI-Client -> CTI: ";
@@ -38,9 +38,11 @@ public class CallsProcessorImpl implements CallsProcessor {
     @Qualifier("Pools")
     private Pools pool;
     @Autowired
-    @Qualifier("AgentStateEventProcessor")
-    private AgentStateEventProcessor stateEventProcessor;
+    @Qualifier("AgentStateProcessorImpl")
+    private AgentStateProcessor agentStateProcessor;
 
+
+    //===============METHODS================================
     @Async(value = "threadPoolSender")
     public void processIncomingACDCall(int connectionCallId, ServerDescriptor sd) {
         Collection<AgentDescriptor> agents = pool.getAgentMapping().values();
@@ -50,7 +52,7 @@ public class CallsProcessorImpl implements CallsProcessor {
                 pool.getCallsHolder().put(connectionCallId, new CallDescriptor(connectionCallId, ad, CallState.NONE_CALL));
                 //установка клиентского сотояния
                 ad.setState(AgentStates.AGENT_STATE_RESERVED);
-                stateEventProcessor.getAgentEventQueue().add(new AgentEvent(ad, sd));
+                agentStateProcessor.processAgentStateEvent(new AgentEvent(ad, sd));
                 //звонки
                 BeginCallEvent beginCallEvent = prepareBeginCallEvent(connectionCallId, ad);
                 sd.getTransport().getOutput().add(beginCallEvent.serializeMessage());
@@ -76,7 +78,7 @@ public class CallsProcessorImpl implements CallsProcessor {
         logger.logMore_1(module, directionOut + answerCallConf.toString());
 
         ad.setState(AgentStates.AGENT_STATE_TALKING);
-        stateEventProcessor.getAgentEventQueue().add(new AgentEvent(ad, sd));
+        agentStateProcessor.processAgentStateEvent(new AgentEvent(ad, sd));
 
         CallDataUpdateEvent callDataUpdateEvent = prepareCallDataUpdateEvent(req.getConnectionCallID(), pool.getCallsHolder().get(req.getConnectionCallID()).getAgentDescriptor());
         sd.getTransport().getOutput().add(callDataUpdateEvent.serializeMessage());
@@ -102,7 +104,7 @@ public class CallsProcessorImpl implements CallsProcessor {
         logger.logMore_1(module, directionOut + callClearedEvent.toString());
 
         ad.setState(AgentStates.AGENT_STATE_AVAILABLE);
-        stateEventProcessor.getAgentEventQueue().add(new AgentEvent(ad, sd));
+        agentStateProcessor.processAgentStateEvent(new AgentEvent(ad, sd));
 
         EndCallEvent endCallEvent = prepareEndCallEvent(req.getConnectionCallID(), ad);
         sd.getTransport().getOutput().add(endCallEvent.serializeMessage());
@@ -112,6 +114,8 @@ public class CallsProcessorImpl implements CallsProcessor {
         removeCalls(cd.getConnectionCallID());
     }
 
+
+    //===============PRIVATE METHODS================================
     private EndCallEvent prepareEndCallEvent(int connectionCallId, AgentDescriptor ad) {
         EndCallEvent c = new EndCallEvent();
         c.setMonitorId(ad.getMonitorID());

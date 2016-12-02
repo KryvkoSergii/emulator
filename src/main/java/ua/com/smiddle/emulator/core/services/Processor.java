@@ -17,9 +17,9 @@ import ua.com.smiddle.cti.messages.model.messages.miscellaneous.PGStatusCodes;
 import ua.com.smiddle.cti.messages.model.messages.session_management.*;
 import ua.com.smiddle.emulator.AgentDescriptor;
 import ua.com.smiddle.emulator.core.exception.EmulatorException;
-import ua.com.smiddle.emulator.core.model.AgentEvent;
 import ua.com.smiddle.emulator.core.model.ServerDescriptor;
 import ua.com.smiddle.emulator.core.model.UnknownFields;
+import ua.com.smiddle.emulator.core.services.agentstates.AgentStateProcessor;
 import ua.com.smiddle.emulator.core.services.calls.CallsProcessor;
 import ua.com.smiddle.emulator.core.util.LoggerUtil;
 
@@ -45,12 +45,15 @@ public class Processor extends Thread {
     @Autowired
     @Qualifier("Pools")
     private Pools pool;
-    @Autowired
-    @Qualifier("AgentStateEventProcessor")
-    private AgentStateEventProcessor agentStateEventProcessor;
+//    @Autowired
+//    @Qualifier("AgentStateEventProcessor")
+//    private AgentStateEventProcessor agentStateEventProcessor;
     @Autowired
     @Qualifier("CallsProcessorImpl")
-    private CallsProcessor callsProcessor;
+    CallsProcessor callsProcessor;
+    @Autowired
+    @Qualifier("AgentStateProcessorImpl")
+    private AgentStateProcessor agentStateProcessor;
 
 
     //Constructor
@@ -97,16 +100,6 @@ public class Processor extends Thread {
             ByteBuffer buffer = ByteBuffer.wrap(inputMessage, 4, 8);
             int code = buffer.getInt();
             switch (code) {
-                case CTI.MSG_ANSWER_CALL_REQ: {
-                    AnswerCallReq answerCallReq = AnswerCallReq.deserializeMessage(inputMessage);
-                    logger.logMore_1(module, directionIn + answerCallReq.toString());
-                    callsProcessor.processAnswerCallReq(answerCallReq, sd);
-                }
-                case CTI.MSG_CLEAR_CALL_REQ: {
-                    ClearCallReq clearCallReq = ClearCallReq.deserializeMessage(inputMessage);
-                    logger.logMore_1(module, directionIn + clearCallReq.toString());
-                    callsProcessor.processClearCallReq(clearCallReq, sd);
-                }
                 case CTI.MSG_HEARTBEAT_REQ: {
                     HeartbeatReq heartbeatReq = HeartbeatReq.deserializeMessage(inputMessage);
                     logger.logMore_2(module, directionIn + heartbeatReq.toString());
@@ -131,13 +124,13 @@ public class Processor extends Thread {
                 case CTI.MSG_QUERY_AGENT_STATE_REQ: {
                     QueryAgentStateReq queryAgentStateReq = QueryAgentStateReq.deserializeMessage(inputMessage);
                     logger.logMore_1(module, directionIn + queryAgentStateReq.toString());
-                    processQUERY_AGENT_STATE_REQ(queryAgentStateReq, sd);
+                    processQueryAgentStateReq(queryAgentStateReq, sd);
                     break;
                 }
                 case CTI.MSG_SET_AGENT_STATE_REQ: {
                     SetAgentStateReq setAgentStateReq = SetAgentStateReq.deserializeMessage(inputMessage);
                     logger.logMore_1(module, directionIn + setAgentStateReq.toString());
-                    processMSG_SET_AGENT_STATE_REQ(setAgentStateReq, sd);
+                    agentStateProcessor.processSetAgentStateReq(setAgentStateReq, sd);
                     break;
                 }
                 case CTI.MSG_CONFIG_REQUEST_KEY_EVENT: {
@@ -168,6 +161,16 @@ public class Processor extends Thread {
                     processMONITOR_STOP_REQ(monitorStopReq, sd);
                     break;
                 }
+                case CTI.MSG_ANSWER_CALL_REQ: {
+                    AnswerCallReq answerCallReq = AnswerCallReq.deserializeMessage(inputMessage);
+                    logger.logMore_1(module, directionIn + answerCallReq.toString());
+                    callsProcessor.processAnswerCallReq(answerCallReq, sd);
+                }
+                case CTI.MSG_CLEAR_CALL_REQ: {
+                    ClearCallReq clearCallReq = ClearCallReq.deserializeMessage(inputMessage);
+                    logger.logMore_1(module, directionIn + clearCallReq.toString());
+                    callsProcessor.processClearCallReq(clearCallReq, sd);
+                }
                 default: {
                     logger.logMore_1(module, "processIncomingMessages: unrecognized message" + Arrays.toString(inputMessage));
                 }
@@ -178,70 +181,70 @@ public class Processor extends Thread {
         }
     }
 
-    /**
-     * AgentPassword игнорируется
-     *
-     * @param message
-     * @throws Exception
-     */
-    private void processMSG_SET_AGENT_STATE_REQ(Object message, ServerDescriptor sd) throws Exception {
-        Transport transport = sd.getTransport();
-        AgentDescriptor tmpAgent = new AgentDescriptor();
-        SetAgentStateReq setAgentStateReq = (SetAgentStateReq) message;
-        for (FloatingField ff : setAgentStateReq.getFloatingFields()) {
-            if (ff.getTag() == Fields.TAG_AGENT_INSTRUMENT.getTagId())
-                //обработка инструмента
-                tmpAgent.setAgentInstrument(ff.getData());
-            else if (ff.getTag() == Fields.TAG_AGENT_ID.getTagId())
-                //обработка AgentID
-                tmpAgent.setAgentID(ff.getData());
-        }
-        tmpAgent.setState(setAgentStateReq.getAgentState());
-//        switch (tmpAgent.getState()) {
-//            case AGENT_STATE_LOGOUT:
-//                removeAgentInPools(tmpAgent);
-//                break;
-//            case AGENT_STATE_UNKNOWN:
-//                removeAgentInPools(tmpAgent);
-//                break;
-//            default:
-//                updateAgentInPools(tmpAgent);
-//                break;
+//    /**
+//     * AgentPassword игнорируется
+//     *
+//     * @param message
+//     * @throws Exception
+//     */
+//    private void processMSG_SET_AGENT_STATE_REQ(Object message, ServerDescriptor sd) throws Exception {
+//        Transport transport = sd.getTransport();
+//        AgentDescriptor tmpAgent = new AgentDescriptor();
+//        SetAgentStateReq setAgentStateReq = (SetAgentStateReq) message;
+//        for (FloatingField ff : setAgentStateReq.getFloatingFields()) {
+//            if (ff.getTag() == Fields.TAG_AGENT_INSTRUMENT.getTagId())
+//                //обработка инструмента
+//                tmpAgent.setAgentInstrument(ff.getData());
+//            else if (ff.getTag() == Fields.TAG_AGENT_ID.getTagId())
+//                //обработка AgentID
+//                tmpAgent.setAgentID(ff.getData());
 //        }
-        updateAgentInPools(tmpAgent);
-        SetAgentStateConf setAgentStateConf = new SetAgentStateConf();
-        setAgentStateConf.setInvokeID(setAgentStateReq.getInvokeID());
-        transport.getOutput().add(setAgentStateConf.serializeMessage());
-        logger.logMore_1(module, directionOut + "processMSG_SET_AGENT_STATE_REQ: prepared " + setAgentStateConf);
-        agentStateEventProcessor.getAgentEventQueue().add(new AgentEvent(tmpAgent, sd));
-    }
+//        tmpAgent.setState(setAgentStateReq.getAgentState());
+////        switch (tmpAgent.getState()) {
+////            case AGENT_STATE_LOGOUT:
+////                removeAgentInPools(tmpAgent);
+////                break;
+////            case AGENT_STATE_UNKNOWN:
+////                removeAgentInPools(tmpAgent);
+////                break;
+////            default:
+////                updateAgentInPools(tmpAgent);
+////                break;
+////        }
+//        updateAgentInPools(tmpAgent);
+//        SetAgentStateConf setAgentStateConf = new SetAgentStateConf();
+//        setAgentStateConf.setInvokeID(setAgentStateReq.getInvokeID());
+//        transport.getOutput().add(setAgentStateConf.serializeMessage());
+//        logger.logMore_1(module, directionOut + "processMSG_SET_AGENT_STATE_REQ: prepared " + setAgentStateConf);
+//        agentStateEventProcessor.getAgentEventQueue().add(new AgentEvent(tmpAgent, sd));
+//    }
 
-    private void updateAgentInPools(AgentDescriptor tmpAgent) {
-        Integer monitorID = pool.getMonitorsHolder().get(tmpAgent.getAgentInstrument());
-        if (monitorID != null)
-            tmpAgent.setMonitorID(monitorID);
-        if (tmpAgent.getAgentInstrument() != null) {
-            if (pool.getInstrumentMapping().containsKey(tmpAgent.getAgentInstrument())) {
-                AgentDescriptor a = pool.getInstrumentMapping().get(tmpAgent.getAgentInstrument());
-                a.setAgentInstrument(tmpAgent.getAgentInstrument());
-                if (tmpAgent.getAgentID() != null)
-                    a.setAgentID(tmpAgent.getAgentID());
-                a.setMonitorID(tmpAgent.getMonitorID());
-                a.setState(tmpAgent.getState());
-                logger.logMore_1(module, "updateAgentInPools: updated in InstrumentMapping=" + a.toString());
-            } else {
-                pool.getInstrumentMapping().put(tmpAgent.getAgentInstrument(), tmpAgent);
-                logger.logMore_1(module, "updateAgentInPools: created in InstrumentMapping=" + tmpAgent.toString());
-            }
-        }
-
-        if (tmpAgent.getAgentID() != null) {
-            if (!pool.getAgentMapping().containsKey(tmpAgent.getAgentID())) {
-                pool.getAgentMapping().put(tmpAgent.getAgentID(), tmpAgent);
-                logger.logMore_1(module, "updateAgentInPools: created in AgentMapping=" + tmpAgent);
-            }
-        }
-    }
+//    private void updateAgentInPools(AgentDescriptor tmpAgent) {
+//        Integer monitorID = pool.getMonitorsHolder().get(tmpAgent.getAgentInstrument());
+//        if (monitorID != null)
+//            tmpAgent.setMonitorID(monitorID);
+//        if (tmpAgent.getAgentInstrument() != null) {
+//            if (pool.getInstrumentMapping().containsKey(tmpAgent.getAgentInstrument())) {
+//                AgentDescriptor a = pool.getInstrumentMapping().get(tmpAgent.getAgentInstrument());
+//                a.setAgentInstrument(tmpAgent.getAgentInstrument());
+//                if (tmpAgent.getAgentID() != null)
+//                    a.setAgentID(tmpAgent.getAgentID());
+//                a.setMonitorID(tmpAgent.getMonitorID());
+//                a.setState(tmpAgent.getState());
+//                logger.logMore_1(module, "updateAgentInPools: updated in InstrumentMapping=" + a.toString());
+//            } else {
+//                pool.getInstrumentMapping().put(tmpAgent.getAgentInstrument(), tmpAgent);
+//                logger.logMore_1(module, "updateAgentInPools: created in InstrumentMapping=" + tmpAgent.toString());
+//            }
+//        }
+//
+//        if (tmpAgent.getAgentID() != null) {
+//            if (!pool.getAgentMapping().containsKey(tmpAgent.getAgentID())) {
+//                pool.getAgentMapping().put(tmpAgent.getAgentID(), tmpAgent);
+//                logger.logMore_1(module, "updateAgentInPools: created in AgentMapping=" + tmpAgent);
+//            }
+//        }
+//    }
 
     private void processOPEN_REQ(Object message, ServerDescriptor sd) throws Exception {
         Transport transport = sd.getTransport();
@@ -328,7 +331,7 @@ public class Processor extends Thread {
         return instrument.get();
     }
 
-    private void processQUERY_AGENT_STATE_REQ(Object message, ServerDescriptor sd) throws Exception {
+    private void processQueryAgentStateReq(Object message, ServerDescriptor sd) throws Exception {
         Transport transport = sd.getTransport();
         QueryAgentStateReq queryAgentStateReq = (QueryAgentStateReq) message;
         QueryAgentStateConf queryAgentStateConf = new QueryAgentStateConf();
@@ -355,7 +358,7 @@ public class Processor extends Thread {
             }
         }
         transport.getOutput().add(queryAgentStateConf.serializeMessage());
-        logger.logMore_1(module, directionOut + "processQUERY_AGENT_STATE_REQ: prepared " + queryAgentStateConf);
+        logger.logMore_1(module, directionOut + "processQueryAgentStateReq: prepared " + queryAgentStateConf);
     }
 
     private void processCloseReq(Object message, ServerDescriptor sd) throws Exception {
