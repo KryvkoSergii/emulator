@@ -29,7 +29,7 @@ public class Scenario {
     private LoggerUtil logger;
     private AtomicInteger connectionCallId = new AtomicInteger(100);
 
-    @Scheduled(initialDelay = -1,fixedRate = 15 * 1000)
+    @Scheduled(initialDelay = -1,fixedRate = 30 * 1000)
     private void generateCalls() {
         logger.logAnyway(module, "start generating ACD calls from=" + UnknownFields.ANI + " to=" + UnknownFields.IVR);
         int initCallCount = 0, callCount = 0;

@@ -13,7 +13,9 @@ import ua.com.smiddle.cti.messages.model.messages.common.FloatingField;
 import ua.com.smiddle.cti.messages.model.messages.common.PeripheralTypes;
 import ua.com.smiddle.cti.messages.model.messages.miscellaneous.EventDeviceTypes;
 import ua.com.smiddle.emulator.AgentDescriptor;
-import ua.com.smiddle.emulator.core.model.*;
+import ua.com.smiddle.emulator.core.model.CallDescriptor;
+import ua.com.smiddle.emulator.core.model.CallState;
+import ua.com.smiddle.emulator.core.model.UnknownFields;
 import ua.com.smiddle.emulator.core.services.Pools;
 import ua.com.smiddle.emulator.core.services.agentstates.AgentStateProcessor;
 import ua.com.smiddle.emulator.core.util.LoggerUtil;
@@ -46,7 +48,8 @@ public class CallsProcessorImpl implements CallsProcessor {
     public void processIncomingACDCall(int connectionCallId) {
         for (AgentDescriptor ad : pool.getAgentMapping().values()) {
             try {
-                if (ad.getState() != AgentStates.AGENT_STATE_AVAILABLE) continue;
+                if (ad.getState() != AgentStates.AGENT_STATE_AVAILABLE)
+                    continue;
                 pool.getCallsHolder().put(connectionCallId, new CallDescriptor(connectionCallId, ad, CallState.NONE_CALL));
                 //установка клиентского сотояния
                 ad.setState(AgentStates.AGENT_STATE_RESERVED);
@@ -208,6 +211,7 @@ public class CallsProcessorImpl implements CallsProcessor {
         c.setCalledDeviceType(EventDeviceTypes.DEVICE_IDENTIFIER);
         c.setLastRedirectDeviceType(EventDeviceTypes.DEVICE_IDENTIFIER);
         c.setEventCause(EventCause.CEC_INVALID_ACCOUNT_CODE);
+        c.setLocalConnectionState(LocalConnectionState.LCS_CONNECT);
         c.setNumNamedVariables(UnknownFields.NumNamedVariables);
         c.setNumNamedArrays(UnknownFields.NumNamedArrays);
         c.setFloatingFields(new ArrayList<>());
