@@ -19,7 +19,7 @@ import java.util.Collection;
 @RestController("ResultRESTController")
 @RequestMapping("/cti-emulator/remote")
 public class RemoteAccessController {
-    private final String module = "RemoteAccessController";
+    private static final String module = "RemoteAccessController";
     @Autowired
     @Qualifier("LoggerUtil")
     private LoggerUtil logger;

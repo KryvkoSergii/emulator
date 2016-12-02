@@ -1,14 +1,15 @@
-package ua.com.smiddle.emulator.core.services;
+package ua.com.smiddle.emulator.core.services.agentstates;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Service;
+import org.springframework.scheduling.annotation.Async;
 import ua.com.smiddle.cti.messages.model.messages.agent_events.AgentStateEvent;
 import ua.com.smiddle.cti.messages.model.messages.agent_events.AgentStates;
 import ua.com.smiddle.cti.messages.model.messages.common.PeripheralTypes;
 import ua.com.smiddle.emulator.AgentDescriptor;
 import ua.com.smiddle.emulator.core.model.AgentEvent;
 import ua.com.smiddle.emulator.core.model.UnknownFields;
+import ua.com.smiddle.emulator.core.services.Pools;
 import ua.com.smiddle.emulator.core.util.LoggerUtil;
 
 import javax.annotation.PostConstruct;
@@ -16,12 +17,12 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
- * @author srg on 22.11.16.
+ * @author ksa on 02.12.16.
  * @project emulator
  */
-@Service("AgentStateEventProcessor")
-public class AgentStateEventProcessor extends Thread {
-    private static final String module = "AgentStateEventProcessor";
+public class AgentStateProcessorImpl {
+
+    private static final String module = "AgentStateProcessorImpl";
     private static final String directionIn = "CTI-Client -> CTI: ";
     private static final String directionOut = "CTI-Client <- CTI: ";
     @Autowired
@@ -30,21 +31,10 @@ public class AgentStateEventProcessor extends Thread {
     @Autowired
     @Qualifier("Pools")
     private Pools pool;
-    private BlockingQueue<AgentEvent> agentEventQueue = new LinkedBlockingQueue<>();
 
 
     //Constructors
-    public AgentStateEventProcessor() {
-    }
-
-
-    //Getters and setters
-    public BlockingQueue<AgentEvent> getAgentEventQueue() {
-        return agentEventQueue;
-    }
-
-    public void setAgentEventQueue(BlockingQueue<AgentEvent> agentEventQueue) {
-        this.agentEventQueue = agentEventQueue;
+    public AgentStateProcessorImpl() {
     }
 
 
@@ -52,23 +42,9 @@ public class AgentStateEventProcessor extends Thread {
     @PostConstruct
     private void init() {
         logger.logAnyway(module, "initialized...");
-        start();
     }
 
-    @Override
-    public void run() {
-        logger.logAnyway(module, "started...");
-        while (!isInterrupted()) {
-            try {
-                AgentEvent ae = agentEventQueue.take();
-                processAGENT_STATE_EVENT(ae);
-            } catch (Exception e) {
-                logger.logAnyway(module, "throw Exception=" + e.getMessage());
-            }
-
-        }
-    }
-
+    @Async("threadPoolSender")
     private void processAGENT_STATE_EVENT(AgentEvent event) throws Exception {
         switch (event.getAgentDescriptor().getState()) {
             case AGENT_STATE_LOGIN: {
@@ -134,6 +110,5 @@ public class AgentStateEventProcessor extends Thread {
 //            pool.getMonitorsHolder().remove(tmpAgent.getMonitorID());
         logger.logMore_2(module, "removed for=" + tmpAgent.getAgentID() + " " + tmpAgent.getAgentInstrument());
     }
-
 
 }

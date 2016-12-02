@@ -24,7 +24,8 @@ import java.util.Date;
 import java.util.Locale;
 
 /**
- * Created by srg on 22.09.16.
+ * @project emulator
+ * @author srg on 22.09.16.
  */
 @Service("FilePersister")
 @Scope("singleton")
@@ -41,7 +42,7 @@ public class LogFilePersister implements LogPersister {
     private String fileAbsolutePath;
     private RandomAccessFile raFile;
     private Date currentDate;
-    private String fileNamePrefix = "cti-emulator";
+    private static final String fileNamePrefix = "cti-emulator";
     private String newPath;
 
 

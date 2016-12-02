@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * @project emulator
  */
 public class Transport extends Thread {
-    private final String module = "Transport";
+    private static final String module = "Transport";
     private Queue<byte[]> input;
     private Queue<byte[]> output;
     private Socket socket;
@@ -106,7 +106,7 @@ public class Transport extends Thread {
                 }
             }
             isDone = true;
-            destroy();
+            destroyBean();
         } catch (IOException e) {
             logger.logAnyway(module, e.getMessage());
         }
@@ -123,7 +123,7 @@ public class Transport extends Thread {
             byte[] message = buffer.array();
             input.add(message);
             logger.logMore_2(module, "RECEIVED:" + Arrays.toString(message));
-        } else return;
+        }
     }
 
     private void write(OutputStream os) throws IOException {
@@ -136,14 +136,14 @@ public class Transport extends Thread {
     }
 
     @PreDestroy
-    public void destroy() {
+    public void destroyBean() {
         logger.logAnyway(module, "Shutting down...");
         interrupt();
         while (!output.isEmpty()) {
             try {
                 write(socket.getOutputStream());
             } catch (IOException e) {
-                logger.logAnyway(module, "destroy: writing messages to socket throw Exception=" + e.getMessage());
+                logger.logAnyway(module, "destroyBean: writing messages to socket throw Exception=" + e.getMessage());
             }
         }
         try {
@@ -151,7 +151,7 @@ public class Transport extends Thread {
             socket.getOutputStream().close();
             socket.close();
         } catch (IOException e) {
-            logger.logAnyway(module, "destroy: closing throw Exception=" + e.getMessage());
+            logger.logAnyway(module, "destroyBean: closing throw Exception=" + e.getMessage());
         }
     }
 

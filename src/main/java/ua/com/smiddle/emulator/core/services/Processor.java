@@ -34,9 +34,9 @@ import java.util.*;
  */
 @Service("Processor")
 public class Processor extends Thread {
-    private final String module = "Processor";
-    private final String directionIn = "CTI-Client -> CTI: ";
-    private final String directionOut = "CTI-Client <- CTI: ";
+    private static final String module = "Processor";
+    private static final String directionIn = "CTI-Client -> CTI: ";
+    private static final String directionOut = "CTI-Client <- CTI: ";
     @Autowired
     private ApplicationContext context;
     @Autowired
@@ -86,9 +86,7 @@ public class Processor extends Thread {
         //not started yet
         if (sd.getIdleTimeout() == 0) return true;
         //already started
-        if (System.currentTimeMillis() - sd.getTransport().getLastIncommingMessage() < (sd.getIdleTimeout() * 1000)) {
-            return true;
-        } else return false;
+        return System.currentTimeMillis() - sd.getTransport().getLastIncommingMessage() < (sd.getIdleTimeout() * 1000);
     }
 
     private void processIncomingMessages(ServerDescriptor sd) {
@@ -99,12 +97,12 @@ public class Processor extends Thread {
             ByteBuffer buffer = ByteBuffer.wrap(inputMessage, 4, 8);
             int code = buffer.getInt();
             switch (code) {
-                case CTI.MSG_ANSWER_CALL_REQ:{
+                case CTI.MSG_ANSWER_CALL_REQ: {
                     AnswerCallReq answerCallReq = AnswerCallReq.deserializeMessage(inputMessage);
                     logger.logMore_1(module, directionIn + answerCallReq.toString());
                     callsProcessor.processAnswerCallReq(answerCallReq, sd);
                 }
-                case CTI.MSG_CLEAR_CALL_REQ:{
+                case CTI.MSG_CLEAR_CALL_REQ: {
                     ClearCallReq clearCallReq = ClearCallReq.deserializeMessage(inputMessage);
                     logger.logMore_1(module, directionIn + clearCallReq.toString());
                     callsProcessor.processClearCallReq(clearCallReq, sd);
@@ -228,8 +226,7 @@ public class Processor extends Thread {
                 a.setAgentInstrument(tmpAgent.getAgentInstrument());
                 if (tmpAgent.getAgentID() != null)
                     a.setAgentID(tmpAgent.getAgentID());
-                if (tmpAgent.getMonitorID() != null)
-                    a.setMonitorID(tmpAgent.getMonitorID());
+                a.setMonitorID(tmpAgent.getMonitorID());
                 a.setState(tmpAgent.getState());
                 logger.logMore_1(module, "updateAgentInPools: updated in InstrumentMapping=" + a.toString());
             } else {
@@ -314,7 +311,7 @@ public class Processor extends Thread {
             String instrument = findMonitorIDinPool(monitorStopReq.getMonitorId());
             //очистка InstrumentMapping пула
             AgentDescriptor ad = pool.getInstrumentMapping().get(instrument);
-            if (ad != null) ad.setMonitorID(null);
+            if (ad != null) ad.setMonitorID(0);
             //очистка MonitorsHolder пула
             pool.getMonitorsHolder().remove(instrument);
             logger.logMore_1(module, "processMONITOR_STOP_REQ: removed MonitorId=" + monitorStopReq.getMonitorId() + " for instrument=" + instrument);
@@ -326,7 +323,7 @@ public class Processor extends Thread {
     private String findMonitorIDinPool(Integer monitorId) throws Exception {
         Optional<String> instrument = pool.getMonitorsHolder().entrySet().stream()
                 .filter(map -> monitorId.equals(map.getValue()))
-                .map(map -> map.getKey())
+                .map(Map.Entry::getKey)
                 .findAny();
         return instrument.get();
     }
@@ -359,7 +356,6 @@ public class Processor extends Thread {
         }
         transport.getOutput().add(queryAgentStateConf.serializeMessage());
         logger.logMore_1(module, directionOut + "processQUERY_AGENT_STATE_REQ: prepared " + queryAgentStateConf);
-
     }
 
     private void processCloseReq(Object message, ServerDescriptor sd) throws Exception {

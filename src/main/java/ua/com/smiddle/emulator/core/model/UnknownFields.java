@@ -28,4 +28,6 @@ public class UnknownFields {
     public static final String IVR = "0800000000";
     public static final short LineHandle = (short) 0xffff;
     public static final int ServiceNumber = 0xFFFFFFFF;
+    public static final int CampaignID = 0;
+    public static final int QueryRuleID = 0;
 }

@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Service("Pools")
 @Scope("singleton")
 public class Pools {
-    private final String module = "Pools";
+    private static final String module = "Pools";
     @Autowired
     @Qualifier("LoggerUtil")
     private LoggerUtil logger;
@@ -122,13 +122,11 @@ public class Pools {
         logger.logMore_1(module, "getPoolsState: instrumentMapping size=" + instrumentMapping.size() + s2);
 
         if (monitorsHolder.size() > 0)
-            s3 = " monitorsHolder=" + monitorsHolder.entrySet().stream().map(map ->
-                    map.toString()).reduce(" ", String::concat);
+            s3 = " monitorsHolder=" + monitorsHolder.entrySet().stream().map(Object::toString).reduce(" ", String::concat);
         logger.logMore_1(module, "getPoolsState: monitorsHolder size=" + monitorsHolder.size() + s3);
 
         if (subscribers.size() > 0)
-            s4 = " subscribers=" + subscribers.stream().map(map ->
-                    map.toString()).reduce(" ", String::concat);
+            s4 = " subscribers=" + subscribers.stream().map(ServerDescriptor::toString).reduce(" ", String::concat);
         logger.logMore_1(module, "getPoolsState: subscribers size=" + subscribers.size() + s4);
 
     }

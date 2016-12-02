@@ -11,6 +11,8 @@ public class CallDescriptor {
     private AgentDescriptor agentDescriptor;
     private CallState callState;
 
+
+    //Constructors
     public CallDescriptor() {
     }
 
@@ -20,6 +22,8 @@ public class CallDescriptor {
         this.callState = callState;
     }
 
+
+    //Getters and setters
     public int getConnectionCallID() {
         return connectionCallID;
     }

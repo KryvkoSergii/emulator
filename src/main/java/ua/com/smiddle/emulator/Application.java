@@ -3,7 +3,6 @@ package ua.com.smiddle.emulator;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.*;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -14,7 +13,8 @@ import ua.com.smiddle.emulator.core.services.Transport;
 import java.util.concurrent.Executor;
 
 /**
- * Created by srg on 14.09.16.
+ * @author srg on 14.09.16.
+ * @project emulator
  */
 @SpringBootApplication
 @Configuration
@@ -26,32 +26,33 @@ import java.util.concurrent.Executor;
 public class Application {
 
     public static void main(String[] args) {
-        ApplicationContext ctx = SpringApplication.run(Application.class, args);
+//        ApplicationContext ctx =
+        SpringApplication.run(Application.class, args);
     }
 
-    @Bean(name = "threadPoolTransfer")
+    @Bean(name = "threadPoolSender")
     public Executor threadPoolTaskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(2);
-        executor.setMaxPoolSize(2);
-        executor.setQueueCapacity(10);
+        executor.setCorePoolSize(4);
+        executor.setMaxPoolSize(4);
+        executor.setQueueCapacity(2000);
         executor.setThreadNamePrefix("EventSenderThread-");
         executor.initialize();
         return executor;
     }
 
-    @Bean(name = "processCalls")
-    public Executor threadPoolCallsExecutor() {
-        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(4);
-        executor.setMaxPoolSize(4);
-        executor.setQueueCapacity(2000);
-        executor.setThreadNamePrefix("CallsSenderThread-");
-        executor.initialize();
-        return executor;
-    }
+//    @Bean(name = "processCalls")
+//    public Executor threadPoolCallsExecutor() {
+//        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+//        executor.setCorePoolSize(4);
+//        executor.setMaxPoolSize(4);
+//        executor.setQueueCapacity(2000);
+//        executor.setThreadNamePrefix("CallsSenderThread-");
+//        executor.initialize();
+//        return executor;
+//    }
 
-    @Bean(name = "Transport", destroyMethod = "destroy")
+    @Bean(name = "Transport", destroyMethod = "destroyBean")
     @Scope(value = "prototype")
     public Transport getTransport() {
         return new Transport();

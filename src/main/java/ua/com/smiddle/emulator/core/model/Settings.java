@@ -3,13 +3,11 @@ package ua.com.smiddle.emulator.core.model;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.springframework.core.env.Environment;
 
-import javax.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Properties;
 
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-@XmlRootElement
 public class Settings implements Serializable {
     private final static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss");
     private volatile Long id;
