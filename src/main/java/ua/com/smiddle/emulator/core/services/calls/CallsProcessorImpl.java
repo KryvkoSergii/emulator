@@ -19,7 +19,6 @@ import ua.com.smiddle.emulator.core.services.agentstates.AgentStateProcessor;
 import ua.com.smiddle.emulator.core.util.LoggerUtil;
 
 import java.util.ArrayList;
-import java.util.Collection;
 
 /**
  * @author ksa on 01.12.16.
@@ -45,8 +44,7 @@ public class CallsProcessorImpl implements CallsProcessor {
     //===============METHODS================================
     @Async(value = "threadPoolSender")
     public void processIncomingACDCall(int connectionCallId, ServerDescriptor sd) {
-        Collection<AgentDescriptor> agents = pool.getAgentMapping().values();
-        for (AgentDescriptor ad : agents) {
+        for (AgentDescriptor ad : pool.getAgentMapping().values()) {
             try {
                 if (ad.getState() != AgentStates.AGENT_STATE_AVAILABLE) continue;
                 pool.getCallsHolder().put(connectionCallId, new CallDescriptor(connectionCallId, ad, CallState.NONE_CALL));
@@ -61,10 +59,11 @@ public class CallsProcessorImpl implements CallsProcessor {
                 sd.getTransport().getOutput().add(callDeliveredEvent.serializeMessage());
                 pool.getCallsHolder().get(connectionCallId).setCallState(CallState.DELIVERED_CALL);
                 logger.logMore_1(module, directionOut + callDeliveredEvent.toString());
-                break;
+                return;
             } catch (Exception e) {
                 logger.logAnyway(module, "processIncomingACDCall: for agent=" + ad.getAgentID() + " throw Exception=" + e.getMessage());
             }
+            logger.logMore_1(module, "processIncomingACDCall: unable find agent for connectionCallId=" + connectionCallId);
         }
     }
 

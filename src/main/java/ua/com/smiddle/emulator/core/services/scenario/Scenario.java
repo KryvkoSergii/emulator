@@ -4,7 +4,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import ua.com.smiddle.emulator.core.model.ServerDescriptor;
+import ua.com.smiddle.emulator.core.model.UnknownFields;
+import ua.com.smiddle.emulator.core.services.Pools;
 import ua.com.smiddle.emulator.core.services.calls.CallsProcessor;
+import ua.com.smiddle.emulator.core.util.LoggerUtil;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author ksa on 01.12.16.
@@ -12,12 +18,30 @@ import ua.com.smiddle.emulator.core.services.calls.CallsProcessor;
  */
 @Component("Scenario")
 public class Scenario {
+    private final String module = "Scenario";
     @Autowired
     @Qualifier("CallsProcessorImpl")
     private CallsProcessor callsProcessor;
+    @Autowired
+    @Qualifier("Pools")
+    private Pools pools;
+    @Autowired
+    @Qualifier("LoggerUtil")
+    private LoggerUtil logger;
+    private AtomicInteger connectionCallId = new AtomicInteger(100);
 
-    @Scheduled(fixedRate = 15*60*1000)
-    private void generateCalls(){
-        callsProcessor.processIncomingACDCall();
+    @Scheduled(fixedRate = 15 * 1000)
+    private void generateCalls() {
+        logger.logAnyway(module, "start generating ACD calls from=" + UnknownFields.ANI + " to=" + UnknownFields.IVR);
+        int initCallCount;
+        int callCount = 0;
+        for (ServerDescriptor sd : pools.getSubscribers()) {
+            initCallCount = callCount;
+            for (int i = 0; i < pools.getAgentMapping().size(); i++) {
+                callsProcessor.processIncomingACDCall(connectionCallId.getAndIncrement(), sd);
+                callCount++;
+            }
+            logger.logAnyway(module, "generated calls number=" + (callCount + initCallCount));
+        }
     }
 }
