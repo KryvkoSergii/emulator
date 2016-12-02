@@ -130,7 +130,7 @@ public class Processor extends Thread {
                 case CTI.MSG_SET_AGENT_STATE_REQ: {
                     SetAgentStateReq setAgentStateReq = SetAgentStateReq.deserializeMessage(inputMessage);
                     logger.logMore_1(module, directionIn + setAgentStateReq.toString());
-                    agentStateProcessor.processSetAgentStateReq(setAgentStateReq, sd);
+                    agentStateProcessor.processSetAgentStateReq(setAgentStateReq);
                     break;
                 }
                 case CTI.MSG_CONFIG_REQUEST_KEY_EVENT: {
@@ -164,12 +164,12 @@ public class Processor extends Thread {
                 case CTI.MSG_ANSWER_CALL_REQ: {
                     AnswerCallReq answerCallReq = AnswerCallReq.deserializeMessage(inputMessage);
                     logger.logMore_1(module, directionIn + answerCallReq.toString());
-                    callsProcessor.processAnswerCallReq(answerCallReq, sd);
+                    callsProcessor.processAnswerCallReq(answerCallReq);
                 }
                 case CTI.MSG_CLEAR_CALL_REQ: {
                     ClearCallReq clearCallReq = ClearCallReq.deserializeMessage(inputMessage);
                     logger.logMore_1(module, directionIn + clearCallReq.toString());
-                    callsProcessor.processClearCallReq(clearCallReq, sd);
+                    callsProcessor.processClearCallReq(clearCallReq);
                 }
                 default: {
                     logger.logMore_1(module, "processIncomingMessages: unrecognized message" + Arrays.toString(inputMessage));

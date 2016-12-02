@@ -41,7 +41,7 @@ public class Scenario {
                 callsProcessor.processIncomingACDCall(connectionCallId.getAndIncrement(), sd);
                 callCount++;
             }
-            logger.logAnyway(module, "generated calls number=" + (callCount + initCallCount));
+            logger.logAnyway(module, "generated calls number=" + (callCount + initCallCount) + " for=" + sd.getTransport().getSocket().getRemoteSocketAddress());
         }
     }
 }

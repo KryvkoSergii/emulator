@@ -43,20 +43,20 @@ public class CallsProcessorImpl implements CallsProcessor {
 
     //===============METHODS================================
     @Async(value = "threadPoolSender")
-    public void processIncomingACDCall(int connectionCallId, ServerDescriptor sd) {
+    public void processIncomingACDCall(int connectionCallId) {
         for (AgentDescriptor ad : pool.getAgentMapping().values()) {
             try {
                 if (ad.getState() != AgentStates.AGENT_STATE_AVAILABLE) continue;
                 pool.getCallsHolder().put(connectionCallId, new CallDescriptor(connectionCallId, ad, CallState.NONE_CALL));
                 //установка клиентского сотояния
                 ad.setState(AgentStates.AGENT_STATE_RESERVED);
-                agentStateProcessor.processAgentStateEvent(new AgentEvent(ad, sd));
+                agentStateProcessor.processAgentStateEvent(ad);
                 //звонки
                 BeginCallEvent beginCallEvent = prepareBeginCallEvent(connectionCallId, ad);
-                sd.getTransport().getOutput().add(beginCallEvent.serializeMessage());
+                agentStateProcessor.sendMessageToAllSubscribers(beginCallEvent.serializeMessage());
                 logger.logMore_1(module, directionOut + beginCallEvent.toString());
                 CallDeliveredEvent callDeliveredEvent = prepareCallDeliveredEvent(connectionCallId, ad);
-                sd.getTransport().getOutput().add(callDeliveredEvent.serializeMessage());
+                agentStateProcessor.sendMessageToAllSubscribers(callDeliveredEvent.serializeMessage());
                 pool.getCallsHolder().get(connectionCallId).setCallState(CallState.DELIVERED_CALL);
                 logger.logMore_1(module, directionOut + callDeliveredEvent.toString());
                 return;
@@ -68,45 +68,45 @@ public class CallsProcessorImpl implements CallsProcessor {
     }
 
     @Async(value = "threadPoolSender")
-    public void processAnswerCallReq(AnswerCallReq req, ServerDescriptor sd) throws Exception {
+    public void processAnswerCallReq(AnswerCallReq req) throws Exception {
         CallDescriptor cd = pool.getCallsHolder().get(req.getConnectionCallID());
         AgentDescriptor ad = cd.getAgentDescriptor();
 
         AnswerCallConf answerCallConf = new AnswerCallConf(req.getInvokeId());
-        sd.getTransport().getOutput().add(answerCallConf.serializeMessage());
+        agentStateProcessor.sendMessageToAllSubscribers(answerCallConf.serializeMessage());
         logger.logMore_1(module, directionOut + answerCallConf.toString());
 
         ad.setState(AgentStates.AGENT_STATE_TALKING);
-        agentStateProcessor.processAgentStateEvent(new AgentEvent(ad, sd));
+        agentStateProcessor.processAgentStateEvent(ad);
 
         CallDataUpdateEvent callDataUpdateEvent = prepareCallDataUpdateEvent(req.getConnectionCallID(), pool.getCallsHolder().get(req.getConnectionCallID()).getAgentDescriptor());
-        sd.getTransport().getOutput().add(callDataUpdateEvent.serializeMessage());
+        agentStateProcessor.sendMessageToAllSubscribers(callDataUpdateEvent.serializeMessage());
         logger.logMore_1(module, directionOut + callDataUpdateEvent.toString());
 
         CallEstablishedEvent callEstablishedEvent = prepareCallEstablishedEvent(req.getConnectionCallID(), pool.getCallsHolder().get(req.getConnectionCallID()).getAgentDescriptor());
-        sd.getTransport().getOutput().add(callDataUpdateEvent.serializeMessage());
+        agentStateProcessor.sendMessageToAllSubscribers(callDataUpdateEvent.serializeMessage());
         logger.logMore_1(module, directionOut + callEstablishedEvent.toString());
         cd.setCallState(CallState.ACTIVE_CALL);
     }
 
     @Async(value = "threadPoolSender")
-    public void processClearCallReq(ClearCallReq req, ServerDescriptor sd) throws Exception {
+    public void processClearCallReq(ClearCallReq req) throws Exception {
         CallDescriptor cd = pool.getCallsHolder().get(req.getConnectionCallID());
         AgentDescriptor ad = cd.getAgentDescriptor();
 
         ClearCallConf clearCallConf = new ClearCallConf(req.getInvokeId());
-        sd.getTransport().getOutput().add(clearCallConf.serializeMessage());
+        agentStateProcessor.sendMessageToAllSubscribers(clearCallConf.serializeMessage());
         logger.logMore_1(module, directionOut + clearCallConf.toString());
 
         CallClearedEvent callClearedEvent = prepareCallClearedEvent(req.getConnectionCallID(), ad);
-        sd.getTransport().getOutput().add(clearCallConf.serializeMessage());
+        agentStateProcessor.sendMessageToAllSubscribers(clearCallConf.serializeMessage());
         logger.logMore_1(module, directionOut + callClearedEvent.toString());
 
         ad.setState(AgentStates.AGENT_STATE_AVAILABLE);
-        agentStateProcessor.processAgentStateEvent(new AgentEvent(ad, sd));
+        agentStateProcessor.processAgentStateEvent(ad);
 
         EndCallEvent endCallEvent = prepareEndCallEvent(req.getConnectionCallID(), ad);
-        sd.getTransport().getOutput().add(endCallEvent.serializeMessage());
+        agentStateProcessor.sendMessageToAllSubscribers(endCallEvent.serializeMessage());
         logger.logMore_1(module, directionOut + callClearedEvent.toString());
 
         cd.setCallState(CallState.CLEARED_CALL);
@@ -250,6 +250,4 @@ public class CallsProcessorImpl implements CallsProcessor {
                     + " state=" + cd.getCallState() + " agent=" + cd.getAgentDescriptor().getAgentID());
         else logger.logMore_1(module, "removeCalls: call id=" + connectionCallId + " not exists");
     }
-
-
 }

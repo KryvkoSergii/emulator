@@ -13,11 +13,8 @@ import ua.com.smiddle.cti.messages.model.messages.common.Fields;
 import ua.com.smiddle.cti.messages.model.messages.common.FloatingField;
 import ua.com.smiddle.cti.messages.model.messages.common.PeripheralTypes;
 import ua.com.smiddle.emulator.AgentDescriptor;
-import ua.com.smiddle.emulator.core.model.AgentEvent;
-import ua.com.smiddle.emulator.core.model.ServerDescriptor;
 import ua.com.smiddle.emulator.core.model.UnknownFields;
 import ua.com.smiddle.emulator.core.services.Pools;
-import ua.com.smiddle.emulator.core.services.Transport;
 import ua.com.smiddle.emulator.core.util.LoggerUtil;
 
 import javax.annotation.PostConstruct;
@@ -52,39 +49,40 @@ public class AgentStateProcessorImpl implements AgentStateProcessor {
     }
 
     //===============METHODS================================
+
     /**
      * Выполняется текущим потоком.
      *
-     * @param event
+     * @param agentDescriptor
      * @throws Exception
      */
     @Override
-    public void processAgentStateEvent(AgentEvent event) throws Exception {
-        switch (event.getAgentDescriptor().getState()) {
+    public void processAgentStateEvent(AgentDescriptor agentDescriptor) throws Exception {
+        switch (agentDescriptor.getState()) {
             case AGENT_STATE_LOGIN: {
-                AgentStateEvent ase = buildAgentStateEvent(event);
-                event.getAgentDescriptor().setState(AgentStates.AGENT_STATE_NOT_READY);
-                event.getServerDescriptor().getTransport().getOutput().add(ase.serializeMessage());
-                processAgentStateEvent(event);
+                AgentStateEvent ase = buildAgentStateEvent(agentDescriptor);
+                agentDescriptor.setState(AgentStates.AGENT_STATE_NOT_READY);
+                sendMessageToAllSubscribers(ase.serializeMessage());
+                processAgentStateEvent(agentDescriptor);
                 logger.logMore_1(module, directionOut + ase);
                 break;
             }
             case AGENT_STATE_NOT_READY: {
-                AgentStateEvent ase = buildAgentStateEvent(event);
-                event.getServerDescriptor().getTransport().getOutput().add(ase.serializeMessage());
+                AgentStateEvent ase = buildAgentStateEvent(agentDescriptor);
+                sendMessageToAllSubscribers(ase.serializeMessage());
                 logger.logMore_1(module, directionOut + ase);
                 break;
             }
             case AGENT_STATE_LOGOUT: {
-                AgentStateEvent ase = buildAgentStateEvent(event);
-                event.getServerDescriptor().getTransport().getOutput().add(ase.serializeMessage());
-                removeAgentInPools(event.getAgentDescriptor());
+                AgentStateEvent ase = buildAgentStateEvent(agentDescriptor);
+                sendMessageToAllSubscribers(ase.serializeMessage());
+                removeAgentInPools(agentDescriptor);
                 logger.logMore_1(module, directionOut + ase);
                 break;
             }
             default: {
-                AgentStateEvent ase = buildAgentStateEvent(event);
-                event.getServerDescriptor().getTransport().getOutput().add(ase.serializeMessage());
+                AgentStateEvent ase = buildAgentStateEvent(agentDescriptor);
+                sendMessageToAllSubscribers(ase.serializeMessage());
                 logger.logMore_1(module, directionOut + ase);
                 break;
             }
@@ -101,8 +99,8 @@ public class AgentStateProcessorImpl implements AgentStateProcessor {
      */
     @Async("threadPoolSender")
     @Override
-    public void processSetAgentStateReq(Object message, ServerDescriptor sd) throws Exception {
-        Transport transport = sd.getTransport();
+    public void processSetAgentStateReq(Object message) throws Exception {
+//        Transport transport = sd.getTransport();
         AgentDescriptor tmpAgent = new AgentDescriptor();
         SetAgentStateReq setAgentStateReq = (SetAgentStateReq) message;
         for (FloatingField ff : setAgentStateReq.getFloatingFields()) {
@@ -117,25 +115,30 @@ public class AgentStateProcessorImpl implements AgentStateProcessor {
         updateAgentInPools(tmpAgent);
         SetAgentStateConf setAgentStateConf = new SetAgentStateConf();
         setAgentStateConf.setInvokeID(setAgentStateReq.getInvokeID());
-        transport.getOutput().add(setAgentStateConf.serializeMessage());
+        sendMessageToAllSubscribers(setAgentStateConf.serializeMessage());
         logger.logMore_1(module, directionOut + "processSetAgentStateReq: prepared " + setAgentStateConf);
-        processAgentStateEvent(new AgentEvent(tmpAgent, sd));
+        processAgentStateEvent(tmpAgent);
+    }
+
+    @Override
+    public void sendMessageToAllSubscribers(byte[] message) {
+        pool.getSubscribers().forEach(serverDescriptor -> serverDescriptor.getTransport().getOutput().add(message));
     }
 
 
     //===============PRIVATE METHODS================================
-    private AgentStateEvent buildAgentStateEvent(AgentEvent event) {
+    private AgentStateEvent buildAgentStateEvent(AgentDescriptor agentDescriptor) {
         AgentStateEvent a = new AgentStateEvent();
-        a.setMonitorId(event.getAgentDescriptor().getMonitorID());
+        a.setMonitorId(agentDescriptor.getMonitorID());
         a.setPeripheralId(UnknownFields.PeripheralID);
         a.setSessionId(UnknownFields.SessionId);
         a.setPeripheralType(PeripheralTypes.PT_ACMI_ERS);
-        a.setSkillGroupState((short) AgentStates.setIntState(event.getAgentDescriptor().getState()));
+        a.setSkillGroupState((short) AgentStates.setIntState(agentDescriptor.getState()));
         a.setStateDuration(UnknownFields.StateDuration);
         a.setSkillGroupNumber(UnknownFields.SkillGroupNumber);
         a.setSkillGroupId(UnknownFields.SkillGroupID);
         a.setSkillGroupPriority(UnknownFields.SkillGroupPriority);
-        a.setAgentState(event.getAgentDescriptor().getState());
+        a.setAgentState(agentDescriptor.getState());
         a.setEventReasonCode(UnknownFields.EventReasonCode);
         a.setMrdid(UnknownFields.MRDID);
         a.setNumTasks(UnknownFields.NumTasks);

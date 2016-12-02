@@ -1,7 +1,6 @@
 package ua.com.smiddle.emulator.core.services.agentstates;
 
-import ua.com.smiddle.emulator.core.model.AgentEvent;
-import ua.com.smiddle.emulator.core.model.ServerDescriptor;
+import ua.com.smiddle.emulator.AgentDescriptor;
 
 /**
  * @author ksa on 02.12.16.
@@ -13,17 +12,23 @@ public interface AgentStateProcessor {
      * Проводит сериализацию сообщений.
      *
      * @param message
-     * @param sd
      * @throws Exception
      */
-    void processSetAgentStateReq(Object message, ServerDescriptor sd) throws Exception;
+    void processSetAgentStateReq(Object message) throws Exception;
 
     /**
      * Выполняется в текущем потоке. Требует ручное изменения стостяния агента.
      * Проводит сериализацию сообщений.
      *
-     * @param event
+     * @param agentDescriptor
      * @throws Exception
      */
-    void processAgentStateEvent(AgentEvent event) throws Exception;
+    void processAgentStateEvent(AgentDescriptor agentDescriptor) throws Exception;
+
+    /**
+     * Добавление сообщения всем клиентским подписчикам.
+     *
+     * @param message
+     */
+    void sendMessageToAllSubscribers(byte[] message);
 }
