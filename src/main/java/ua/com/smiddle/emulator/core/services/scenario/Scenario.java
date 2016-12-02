@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import ua.com.smiddle.emulator.core.model.ServerDescriptor;
 import ua.com.smiddle.emulator.core.model.UnknownFields;
 import ua.com.smiddle.emulator.core.services.Pools;
 import ua.com.smiddle.emulator.core.services.calls.CallsProcessor;
@@ -30,18 +29,14 @@ public class Scenario {
     private LoggerUtil logger;
     private AtomicInteger connectionCallId = new AtomicInteger(100);
 
-    @Scheduled(fixedRate = 15 * 1000)
+    @Scheduled(initialDelay = -1,fixedRate = 15 * 1000)
     private void generateCalls() {
         logger.logAnyway(module, "start generating ACD calls from=" + UnknownFields.ANI + " to=" + UnknownFields.IVR);
-        int initCallCount;
-        int callCount = 0;
-        for (ServerDescriptor sd : pools.getSubscribers()) {
-            initCallCount = callCount;
-            for (int i = 0; i < pools.getAgentMapping().size(); i++) {
-                callsProcessor.processIncomingACDCall(connectionCallId.getAndIncrement(), sd);
-                callCount++;
-            }
-            logger.logAnyway(module, "generated calls number=" + (callCount + initCallCount) + " for=" + sd.getTransport().getSocket().getRemoteSocketAddress());
+        int initCallCount = 0, callCount = 0;
+        for (int i = 0; i < pools.getAgentMapping().size(); i++) {
+            callsProcessor.processIncomingACDCall(connectionCallId.getAndIncrement());
+            callCount++;
         }
+        logger.logAnyway(module, "generated calls number=" + (callCount + initCallCount));
     }
 }

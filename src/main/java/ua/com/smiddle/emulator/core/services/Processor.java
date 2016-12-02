@@ -2,7 +2,6 @@ package ua.com.smiddle.emulator.core.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 import ua.com.smiddle.cti.messages.model.messages.CTI;
 import ua.com.smiddle.cti.messages.model.messages.agent_events.*;
@@ -16,7 +15,6 @@ import ua.com.smiddle.cti.messages.model.messages.miscellaneous.ConfigRequestKey
 import ua.com.smiddle.cti.messages.model.messages.miscellaneous.PGStatusCodes;
 import ua.com.smiddle.cti.messages.model.messages.session_management.*;
 import ua.com.smiddle.emulator.AgentDescriptor;
-import ua.com.smiddle.emulator.core.exception.EmulatorException;
 import ua.com.smiddle.emulator.core.model.ServerDescriptor;
 import ua.com.smiddle.emulator.core.model.UnknownFields;
 import ua.com.smiddle.emulator.core.services.agentstates.AgentStateProcessor;
@@ -37,28 +35,20 @@ public class Processor extends Thread {
     private static final String module = "Processor";
     private static final String directionIn = "CTI-Client -> CTI: ";
     private static final String directionOut = "CTI-Client <- CTI: ";
-    @Autowired
-    private ApplicationContext context;
+//    @Autowired
+//    private ApplicationContext context;
     @Autowired
     @Qualifier("LoggerUtil")
     private LoggerUtil logger;
     @Autowired
     @Qualifier("Pools")
     private Pools pool;
-//    @Autowired
-//    @Qualifier("AgentStateEventProcessor")
-//    private AgentStateEventProcessor agentStateEventProcessor;
     @Autowired
     @Qualifier("CallsProcessorImpl")
-    CallsProcessor callsProcessor;
+    private CallsProcessor callsProcessor;
     @Autowired
     @Qualifier("AgentStateProcessorImpl")
     private AgentStateProcessor agentStateProcessor;
-
-
-    //Constructor
-    public Processor() {
-    }
 
 
     //Methods
@@ -104,7 +94,7 @@ public class Processor extends Thread {
                     HeartbeatReq heartbeatReq = HeartbeatReq.deserializeMessage(inputMessage);
                     logger.logMore_2(module, directionIn + heartbeatReq.toString());
                     HeartbeatConf heartbeatConf = new HeartbeatConf(heartbeatReq.getInvokeId());
-                    transport.getOutput().add(heartbeatConf.serializeMessage());
+                    agentStateProcessor.sendMessageToAllSubscribers(heartbeatConf.serializeMessage());
                     logger.logMore_2(module, directionOut + heartbeatConf.toString());
                     break;
                 }
@@ -124,7 +114,7 @@ public class Processor extends Thread {
                 case CTI.MSG_QUERY_AGENT_STATE_REQ: {
                     QueryAgentStateReq queryAgentStateReq = QueryAgentStateReq.deserializeMessage(inputMessage);
                     logger.logMore_1(module, directionIn + queryAgentStateReq.toString());
-                    processQueryAgentStateReq(queryAgentStateReq, sd);
+                    processQueryAgentStateReq(queryAgentStateReq);
                     break;
                 }
                 case CTI.MSG_SET_AGENT_STATE_REQ: {
@@ -152,13 +142,13 @@ public class Processor extends Thread {
                 case CTI.MSG_MONITOR_START_REQ: {
                     MonitorStartReq monitorStartReq = MonitorStartReq.deserializeMessage(inputMessage);
                     logger.logMore_1(module, directionIn + monitorStartReq.toString());
-                    processMONITOR_START_REQ(monitorStartReq, sd);
+                    processMONITOR_START_REQ(monitorStartReq);
                     break;
                 }
                 case CTI.MSG_MONITOR_STOP_REQ: {
                     MonitorStopReq monitorStopReq = MonitorStopReq.deserializeMessage(inputMessage);
                     logger.logMore_1(module, directionIn + monitorStopReq.toString());
-                    processMONITOR_STOP_REQ(monitorStopReq, sd);
+                    processMONITOR_STOP_REQ(monitorStopReq);
                     break;
                 }
                 case CTI.MSG_ANSWER_CALL_REQ: {
@@ -247,7 +237,6 @@ public class Processor extends Thread {
 //    }
 
     private void processOPEN_REQ(Object message, ServerDescriptor sd) throws Exception {
-        Transport transport = sd.getTransport();
         OpenReq openReq = (OpenReq) message;
         sd.setServiceMask(openReq.getServicesMask());
         sd.setCallMsgMask(openReq.getCallMsgMask());
@@ -272,18 +261,17 @@ public class Processor extends Thread {
         openConf.setPeripheralOnline((short) 1);
         openConf.setPeripheralType(PeripheralTypes.PT_ENTERPRISE_AGENT);
         openConf.setAgentState(AgentStates.AGENT_STATE_LOGOUT);
-        transport.getOutput().add(openConf.serializeMessage());
+        agentStateProcessor.sendMessageToAllSubscribers(openConf.serializeMessage());
         logger.logMore_1(module, directionOut + "processOpenReq: prepared " + openConf);
     }
 
-    private void processMONITOR_START_REQ(Object message, ServerDescriptor sd) throws Exception {
-        Transport transport = sd.getTransport();
+    private void processMONITOR_START_REQ(Object message) throws Exception {
         MonitorStartReq monitorStartReq = (MonitorStartReq) message;
         MonitorStartConf monitorStartConf = new MonitorStartConf();
         Integer monitorID = pool.getMonitorID().getAndIncrement();
         monitorStartConf.setInvokeId(monitorStartReq.getInvokeId());
         monitorStartConf.setMonitorId(monitorID);
-        transport.getOutput().add(monitorStartConf.serializeMessage());
+        agentStateProcessor.sendMessageToAllSubscribers(monitorStartConf.serializeMessage());
         logger.logMore_1(module, directionOut + "processMONITOR_START_REQ: prepared " + monitorStartConf);
         String instrument;
         for (FloatingField ff : monitorStartReq.getFloatingFields()) {
@@ -302,12 +290,11 @@ public class Processor extends Thread {
         }
     }
 
-    private void processMONITOR_STOP_REQ(Object message, ServerDescriptor sd) throws Exception {
-        Transport transport = sd.getTransport();
+    private void processMONITOR_STOP_REQ(Object message) throws Exception {
         MonitorStopReq monitorStopReq = (MonitorStopReq) message;
         MonitorStopConf monitorStopConf = new MonitorStopConf();
         monitorStopConf.setInvokeId(monitorStopReq.getInvokeId());
-        transport.getOutput().add(monitorStopConf.serializeMessage());
+        agentStateProcessor.sendMessageToAllSubscribers(monitorStopConf.serializeMessage());
         logger.logMore_1(module, directionOut + "processMONITOR_STOP_REQ: prepared " + monitorStopConf);
         //находит и удаляет монитор в AgentID, удаляет запись
         try {
@@ -331,8 +318,7 @@ public class Processor extends Thread {
         return instrument.get();
     }
 
-    private void processQueryAgentStateReq(Object message, ServerDescriptor sd) throws Exception {
-        Transport transport = sd.getTransport();
+    private void processQueryAgentStateReq(Object message) throws Exception {
         QueryAgentStateReq queryAgentStateReq = (QueryAgentStateReq) message;
         QueryAgentStateConf queryAgentStateConf = new QueryAgentStateConf();
         queryAgentStateConf.setInvokeId(queryAgentStateReq.getInvokeId());
@@ -357,16 +343,15 @@ public class Processor extends Thread {
                 }
             }
         }
-        transport.getOutput().add(queryAgentStateConf.serializeMessage());
+        agentStateProcessor.sendMessageToAllSubscribers(queryAgentStateConf.serializeMessage());
         logger.logMore_1(module, directionOut + "processQueryAgentStateReq: prepared " + queryAgentStateConf);
     }
 
     private void processCloseReq(Object message, ServerDescriptor sd) throws Exception {
-        Transport transport = sd.getTransport();
         CloseReq closeReq = (CloseReq) message;
         CloseConf closeConf = new CloseConf(closeReq.getInvokeId());
         logger.logMore_1(module, directionOut + " processCloseReq: prepared " + closeConf.toString());
-        transport.getOutput().add(closeConf.serializeMessage());
+        agentStateProcessor.sendMessageToAllSubscribers(closeConf.serializeMessage());
     }
 
     @PreDestroy
@@ -378,10 +363,10 @@ public class Processor extends Thread {
         }
     }
 
-    private ServerDescriptor findServerDescriptor(Transport transport) throws EmulatorException {
-        for (ServerDescriptor sd : pool.getSubscribers()) {
-            if (sd.getTransport().equals(transport)) return sd;
-        }
-        throw new EmulatorException("ServerDescriptor can't be defined for " + transport.getSocket().getRemoteSocketAddress());
-    }
+//    private ServerDescriptor findServerDescriptor(Transport transport) throws EmulatorException {
+//        for (ServerDescriptor sd : pool.getSubscribers()) {
+//            if (sd.getTransport().equals(transport)) return sd;
+//        }
+//        throw new EmulatorException("ServerDescriptor can't be defined for " + transport.getSocket().getRemoteSocketAddress());
+//    }
 }

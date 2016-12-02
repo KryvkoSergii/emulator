@@ -41,17 +41,6 @@ public class Application {
         return executor;
     }
 
-//    @Bean(name = "processCalls")
-//    public Executor threadPoolCallsExecutor() {
-//        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-//        executor.setCorePoolSize(4);
-//        executor.setMaxPoolSize(4);
-//        executor.setQueueCapacity(2000);
-//        executor.setThreadNamePrefix("CallsSenderThread-");
-//        executor.initialize();
-//        return executor;
-//    }
-
     @Bean(name = "Transport", destroyMethod = "destroyBean")
     @Scope(value = "prototype")
     public Transport getTransport() {
