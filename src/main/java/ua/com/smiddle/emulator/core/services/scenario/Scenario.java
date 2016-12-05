@@ -43,10 +43,12 @@ public class Scenario {
             if (callCount > 0) startCalling = false;
         } else {
             logger.logAnyway(module, "start dropping ACD calls...");
+            int callCountDrop = 0;
             for (int connectionCallId : pools.getCallsHolder().keySet()) {
                 callsProcessor.processACDCallsEndByCustomer(connectionCallId);
+                callCountDrop++;
             }
-            startCalling = true;
+            if (callCountDrop > 0) startCalling = true;
         }
     }
 }

@@ -18,6 +18,7 @@ import ua.com.smiddle.emulator.core.model.CallState;
 import ua.com.smiddle.emulator.core.model.UnknownFields;
 import ua.com.smiddle.emulator.core.services.Pools;
 import ua.com.smiddle.emulator.core.services.agentstates.AgentStateProcessor;
+import ua.com.smiddle.emulator.core.services.statistic.Statistic;
 import ua.com.smiddle.emulator.core.util.LoggerUtil;
 
 import java.util.ArrayList;
@@ -41,6 +42,9 @@ public class CallsProcessorImpl implements CallsProcessor {
     @Autowired
     @Qualifier("AgentStateProcessorImpl")
     private AgentStateProcessor agentStateProcessor;
+    @Autowired
+    @Qualifier("Statistic")
+    private Statistic statistic;
 
 
     //===============METHODS================================
@@ -120,8 +124,10 @@ public class CallsProcessorImpl implements CallsProcessor {
         CallDescriptor cd = pool.getCallsHolder().get(connectionCallId);
         AgentDescriptor ad = cd.getAgentDescriptor();
 
+        int duration = (int) (System.currentTimeMillis() - cd.getCallStart()) / 1000;
+
         logger.logMore_1(module, "processCallEnd: processing call end connectionCallId=" + connectionCallId + " agentId="
-                + ad.getAgentID() + " call duration=" + (System.currentTimeMillis() - cd.getCallStart()) / 1000 + "sec");
+                + ad.getAgentID() + " call duration=" + duration + "sec");
 
         CallClearedEvent callClearedEvent = prepareCallClearedEvent(connectionCallId, ad);
         agentStateProcessor.sendMessageToAllSubscribers(callClearedEvent.serializeMessage());
@@ -135,6 +141,7 @@ public class CallsProcessorImpl implements CallsProcessor {
         logger.logMore_1(module, directionOut + endCallEvent.toString());
 
         cd.setCallState(CallState.CLEARED_CALL);
+        cd.setCallStart(duration);
         removeCalls(cd.getConnectionCallID());
     }
 
@@ -269,9 +276,15 @@ public class CallsProcessorImpl implements CallsProcessor {
      */
     private void removeCalls(int connectionCallId) {
         CallDescriptor cd = pool.getCallsHolder().remove(connectionCallId);
-        if (cd != null)
+        if (cd != null) {
             logger.logMore_1(module, "removeCalls: removed call=" + connectionCallId
                     + " state=" + cd.getCallState() + " agent=" + cd.getAgentDescriptor().getAgentID());
-        else logger.logMore_1(module, "removeCalls: call id=" + connectionCallId + " not exists");
+            putProcessedCallsToStatistic(cd);
+        } else logger.logMore_1(module, "removeCalls: call id=" + connectionCallId + " not exists");
+    }
+
+    private void putProcessedCallsToStatistic(CallDescriptor cd) {
+        cd.setAgentDescriptor(null);
+        statistic.getCallDescriptors().add(cd);
     }
 }

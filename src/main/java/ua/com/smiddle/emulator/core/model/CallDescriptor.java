@@ -57,4 +57,15 @@ public class CallDescriptor {
     public void setCallStart(long callStart) {
         this.callStart = callStart;
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("CallDescriptor{");
+        sb.append("connectionCallID=").append(connectionCallID);
+        sb.append(", agentDescriptor=").append(agentDescriptor);
+        sb.append(", callState=").append(callState);
+        sb.append(", callStart=").append(callStart);
+        sb.append('}');
+        return sb.toString();
+    }
 }
