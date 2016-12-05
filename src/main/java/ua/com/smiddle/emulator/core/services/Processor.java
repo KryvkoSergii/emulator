@@ -63,13 +63,7 @@ public class Processor extends Thread {
         while (!isInterrupted()) {
             for (Iterator iterator = pool.getSubscribers().iterator(); iterator.hasNext(); ) {
                 ServerDescriptor sd = (ServerDescriptor) iterator.next();
-                if (!sd.getTransport().isDone() && checkTimeOut(sd))
-                    processIncomingMessages(sd);
-                else {
-                    sd.destroy();
-                    logger.logAnyway(module, "Removing ServerDescriptor " + sd.getClientID());
-                    pool.getSubscribers().remove(sd);
-                }
+                processIncomingMessages(sd);
             }
         }
     }

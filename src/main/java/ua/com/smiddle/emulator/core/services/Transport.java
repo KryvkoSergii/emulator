@@ -164,7 +164,6 @@ public class Transport extends Thread {
 
     class Sender extends Thread {
         private OutputStream outputStream;
-        private String name;
 
         public Sender(OutputStream outputStream, String name) {
             setName(name);
