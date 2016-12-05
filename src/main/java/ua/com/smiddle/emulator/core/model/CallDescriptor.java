@@ -10,16 +10,18 @@ public class CallDescriptor {
     private int connectionCallID;
     private AgentDescriptor agentDescriptor;
     private CallState callState;
+    private long callStart;
 
 
     //Constructors
     public CallDescriptor() {
     }
 
-    public CallDescriptor(int connectionCallID, AgentDescriptor agentDescriptor, CallState callState) {
+    public CallDescriptor(int connectionCallID, AgentDescriptor agentDescriptor, CallState callState, long callStart) {
         this.connectionCallID = connectionCallID;
         this.agentDescriptor = agentDescriptor;
         this.callState = callState;
+        this.callStart = callStart;
     }
 
 
@@ -46,5 +48,13 @@ public class CallDescriptor {
 
     public void setCallState(CallState callState) {
         this.callState = callState;
+    }
+
+    public long getCallStart() {
+        return callStart;
+    }
+
+    public void setCallStart(long callStart) {
+        this.callStart = callStart;
     }
 }

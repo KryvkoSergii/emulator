@@ -36,8 +36,6 @@ public class Processor extends Thread {
     private static final String module = "Processor";
     private static final String directionIn = "CTI-Client -> CTI: ";
     private static final String directionOut = "CTI-Client <- CTI: ";
-    //    @Autowired
-//    private ApplicationContext context;
     @Autowired
     @Qualifier("LoggerUtil")
     private LoggerUtil logger;
@@ -87,7 +85,6 @@ public class Processor extends Thread {
         Transport transport = sd.getTransport();
         try {
             byte[] inputMessage = transport.getInput().take();
-//            if (inputMessage == null) return;
             ByteBuffer buffer = ByteBuffer.wrap(inputMessage, 4, 8);
             int code = buffer.getInt();
             switch (code) {
@@ -300,13 +297,6 @@ public class Processor extends Thread {
             sd.getTransport().interrupt();
         }
     }
-
-//    private ServerDescriptor findServerDescriptor(Transport transport) throws EmulatorException {
-//        for (ServerDescriptor sd : pool.getSubscribers()) {
-//            if (sd.getTransport().equals(transport)) return sd;
-//        }
-//        throw new EmulatorException("ServerDescriptor can't be defined for " + transport.getSocket().getRemoteSocketAddress());
-//    }
 
     @Scheduled(initialDelay = -1, fixedDelay = 20 * 1000)
     private void clearSubscribers() {

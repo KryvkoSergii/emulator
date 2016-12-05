@@ -30,7 +30,7 @@ public class Scenario {
     private AtomicInteger connectionCallId = new AtomicInteger(100);
     private boolean startCalling = true;
 
-    @Scheduled(initialDelay = -1, fixedRate = 30 * 1000)
+    @Scheduled(initialDelay = -1, fixedRate = 15 * 1000)
     private void generateCalls() {
         if (startCalling) {
             logger.logAnyway(module, "start generating ACD calls from=" + UnknownFields.ANI + " to=" + UnknownFields.IVR);

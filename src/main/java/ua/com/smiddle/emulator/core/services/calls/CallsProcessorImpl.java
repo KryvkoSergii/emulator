@@ -51,7 +51,7 @@ public class CallsProcessorImpl implements CallsProcessor {
             try {
                 if (ad.getState() != AgentStates.AGENT_STATE_AVAILABLE)
                     continue;
-                pool.getCallsHolder().put(connectionCallId, new CallDescriptor(connectionCallId, ad, CallState.NONE_CALL));
+                pool.getCallsHolder().put(connectionCallId, new CallDescriptor(connectionCallId, ad, CallState.NONE_CALL, System.currentTimeMillis()));
                 //установка клиентского сотояния
                 ad.setState(AgentStates.AGENT_STATE_RESERVED);
                 agentStateProcessor.processAgentStateEvent(ad);
@@ -120,13 +120,14 @@ public class CallsProcessorImpl implements CallsProcessor {
         CallDescriptor cd = pool.getCallsHolder().get(connectionCallId);
         AgentDescriptor ad = cd.getAgentDescriptor();
 
-        logger.logMore_1(module, "processCallEnd: processing call end connectionCallId=" + connectionCallId + " agentId=" + ad.getAgentID());
+        logger.logMore_1(module, "processCallEnd: processing call end connectionCallId=" + connectionCallId + " agentId="
+                + ad.getAgentID() + " call duration=" + (System.currentTimeMillis() - cd.getCallStart()) / 1000 + "sec");
 
         CallClearedEvent callClearedEvent = prepareCallClearedEvent(connectionCallId, ad);
         agentStateProcessor.sendMessageToAllSubscribers(callClearedEvent.serializeMessage());
         logger.logMore_1(module, directionOut + callClearedEvent.toString());
 
-        ad.setState(AgentStates.AGENT_STATE_AVAILABLE);
+        ad.setState(AgentStates.AGENT_STATE_WORK_READY);
         agentStateProcessor.processAgentStateEvent(ad);
 
         EndCallEvent endCallEvent = prepareEndCallEvent(connectionCallId, ad);
@@ -151,7 +152,7 @@ public class CallsProcessorImpl implements CallsProcessor {
 
     private CallClearedEvent prepareCallClearedEvent(int connectionCallId, AgentDescriptor ad) {
         CallClearedEvent c = new CallClearedEvent();
-        c.setMonitorId(connectionCallId);
+        c.setMonitorId(ad.getMonitorID());
         c.setPeripheralId(UnknownFields.PeripheralID);
         c.setPeripheralType(PeripheralTypes.PT_SIEMENS_9006);
         c.setConnectionDeviceIDType(ConnectionDeviceIDTypes.CONNECTION_ID_STATIC);
