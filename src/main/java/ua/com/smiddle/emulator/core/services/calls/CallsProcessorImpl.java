@@ -46,6 +46,7 @@ public class CallsProcessorImpl implements CallsProcessor {
     //===============METHODS================================
     @Async(value = "threadPoolSender")
     public void processIncomingACDCall(int connectionCallId) {
+        int callsCounter = 0;
         for (AgentDescriptor ad : pool.getAgentMapping().values()) {
             try {
                 if (ad.getState() != AgentStates.AGENT_STATE_AVAILABLE)
@@ -62,12 +63,15 @@ public class CallsProcessorImpl implements CallsProcessor {
                 agentStateProcessor.sendMessageToAllSubscribers(callDeliveredEvent.serializeMessage());
                 pool.getCallsHolder().get(connectionCallId).setCallState(CallState.DELIVERED_CALL);
                 logger.logMore_1(module, directionOut + callDeliveredEvent.toString());
-                return;
+                logger.logMore_1(module, "processIncomingACDCall: process connectionCallId=" + connectionCallId + " for agent=" + ad.getAgentID());
+                callsCounter++;
+                continue;
             } catch (Exception e) {
                 logger.logAnyway(module, "processIncomingACDCall: for agent=" + ad.getAgentID() + " throw Exception=" + e.getMessage());
             }
             logger.logMore_1(module, "processIncomingACDCall: unable find agent for connectionCallId=" + connectionCallId);
         }
+        logger.logMore_0(module, "processIncomingACDCall: processed calls number=" + callsCounter);
     }
 
     @Async(value = "threadPoolSender")
@@ -87,37 +91,52 @@ public class CallsProcessorImpl implements CallsProcessor {
         logger.logMore_1(module, directionOut + callDataUpdateEvent.toString());
 
         CallEstablishedEvent callEstablishedEvent = prepareCallEstablishedEvent(req.getConnectionCallID(), pool.getCallsHolder().get(req.getConnectionCallID()).getAgentDescriptor());
-        agentStateProcessor.sendMessageToAllSubscribers(callDataUpdateEvent.serializeMessage());
+        agentStateProcessor.sendMessageToAllSubscribers(callEstablishedEvent.serializeMessage());
         logger.logMore_1(module, directionOut + callEstablishedEvent.toString());
         cd.setCallState(CallState.ACTIVE_CALL);
     }
 
     @Async(value = "threadPoolSender")
     public void processClearCallReq(ClearCallReq req) throws Exception {
-        CallDescriptor cd = pool.getCallsHolder().get(req.getConnectionCallID());
-        AgentDescriptor ad = cd.getAgentDescriptor();
-
         ClearCallConf clearCallConf = new ClearCallConf(req.getInvokeId());
         agentStateProcessor.sendMessageToAllSubscribers(clearCallConf.serializeMessage());
         logger.logMore_1(module, directionOut + clearCallConf.toString());
 
-        CallClearedEvent callClearedEvent = prepareCallClearedEvent(req.getConnectionCallID(), ad);
-        agentStateProcessor.sendMessageToAllSubscribers(clearCallConf.serializeMessage());
+        processCallEnd(req.getConnectionCallID());
+    }
+
+    @Async(value = "threadPoolSender")
+    public void processACDCallsEndByCustomer(int connectionCallId) {
+        try {
+            processCallEnd(connectionCallId);
+        } catch (Exception e) {
+            logger.logMore_1(module, "processACDCallsEndByCustomer: throw Exception=" + e.getMessage());
+        }
+    }
+
+
+    //===============PRIVATE METHODS================================
+    private void processCallEnd(int connectionCallId) throws Exception {
+        CallDescriptor cd = pool.getCallsHolder().get(connectionCallId);
+        AgentDescriptor ad = cd.getAgentDescriptor();
+
+        logger.logMore_1(module, "processCallEnd: processing call end connectionCallId=" + connectionCallId + " agentId=" + ad.getAgentID());
+
+        CallClearedEvent callClearedEvent = prepareCallClearedEvent(connectionCallId, ad);
+        agentStateProcessor.sendMessageToAllSubscribers(callClearedEvent.serializeMessage());
         logger.logMore_1(module, directionOut + callClearedEvent.toString());
 
         ad.setState(AgentStates.AGENT_STATE_AVAILABLE);
         agentStateProcessor.processAgentStateEvent(ad);
 
-        EndCallEvent endCallEvent = prepareEndCallEvent(req.getConnectionCallID(), ad);
+        EndCallEvent endCallEvent = prepareEndCallEvent(connectionCallId, ad);
         agentStateProcessor.sendMessageToAllSubscribers(endCallEvent.serializeMessage());
-        logger.logMore_1(module, directionOut + callClearedEvent.toString());
+        logger.logMore_1(module, directionOut + endCallEvent.toString());
 
         cd.setCallState(CallState.CLEARED_CALL);
         removeCalls(cd.getConnectionCallID());
     }
 
-
-    //===============PRIVATE METHODS================================
     private EndCallEvent prepareEndCallEvent(int connectionCallId, AgentDescriptor ad) {
         EndCallEvent c = new EndCallEvent();
         c.setMonitorId(ad.getMonitorID());
@@ -146,7 +165,7 @@ public class CallsProcessorImpl implements CallsProcessor {
 
     private CallEstablishedEvent prepareCallEstablishedEvent(int connectionCallId, AgentDescriptor ad) {
         CallEstablishedEvent c = new CallEstablishedEvent();
-        c.setMonitorId(connectionCallId);
+        c.setMonitorId(ad.getMonitorID());
         c.setPeripheralId(UnknownFields.PeripheralID);
         c.setPeripheralType(PeripheralTypes.PT_SIEMENS_9006);
         c.setConnectionDeviceIDType(ConnectionDeviceIDTypes.CONNECTION_ID_STATIC);
@@ -194,7 +213,7 @@ public class CallsProcessorImpl implements CallsProcessor {
 
     private CallDeliveredEvent prepareCallDeliveredEvent(int connectionCallId, AgentDescriptor ad) {
         CallDeliveredEvent c = new CallDeliveredEvent();
-        c.setMonitorId(connectionCallId);
+        c.setMonitorId(ad.getMonitorID());
         c.setPeripheralId(UnknownFields.PeripheralID);
         c.setPeripheralType(PeripheralTypes.PT_SIEMENS_9006);
         c.setConnectionDeviceIDType(ConnectionDeviceIDTypes.CONNECTION_ID_STATIC);

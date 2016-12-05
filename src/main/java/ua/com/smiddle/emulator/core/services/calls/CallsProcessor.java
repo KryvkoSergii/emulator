@@ -13,4 +13,6 @@ public interface CallsProcessor {
     void processAnswerCallReq(AnswerCallReq req) throws Exception;
 
     void processClearCallReq(ClearCallReq req) throws Exception;
+
+    void processACDCallsEndByCustomer(int connectionCallId);
 }

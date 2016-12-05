@@ -111,24 +111,24 @@ public class Pools {
     //Methods
     @Scheduled(initialDelay = 5 * 1000, fixedDelay = 5 * 1000)
     private void getPoolsState() {
-        String s1 = "", s2 = "", s3 = "", s4 = "";
-        if (agentMapping.size() > 0)
-            s1 = " agentMapping=" + agentMapping.entrySet().stream().map(map ->
-                    map.getValue().toString()).reduce(" ", String::concat);
-        logger.logMore_1(module, "getPoolsState: agentMapping size=" + agentMapping.size() + s1);
-
-        if (instrumentMapping.size() > 0)
-            s2 = " instrumentMapping=" + instrumentMapping.entrySet().stream().map(map ->
-                    map.getValue().toString()).reduce(" ", String::concat);
-        logger.logMore_1(module, "getPoolsState: instrumentMapping size=" + instrumentMapping.size() + s2);
-
-        if (monitorsHolder.size() > 0)
-            s3 = " monitorsHolder=" + monitorsHolder.entrySet().stream().map(Object::toString).reduce(" ", String::concat);
-        logger.logMore_1(module, "getPoolsState: monitorsHolder size=" + monitorsHolder.size() + s3);
-
-        if (subscribers.size() > 0)
-            s4 = " subscribers=" + subscribers.stream().map(ServerDescriptor::toString).reduce(" ", String::concat);
-        logger.logMore_1(module, "getPoolsState: subscribers size=" + subscribers.size() + s4);
+//        String s1 = "", s2 = "", s3 = "", s4 = "";
+//        if (agentMapping.size() > 0)
+//            s1 = " agentMapping=" + agentMapping.entrySet().stream().map(map ->
+//                    map.getValue().toString()).reduce(" ", String::concat);
+//        logger.logMore_1(module, "getPoolsState: agentMapping size=" + agentMapping.size() + s1);
+//
+//        if (instrumentMapping.size() > 0)
+//            s2 = " instrumentMapping=" + instrumentMapping.entrySet().stream().map(map ->
+//                    map.getValue().toString()).reduce(" ", String::concat);
+//        logger.logMore_1(module, "getPoolsState: instrumentMapping size=" + instrumentMapping.size() + s2);
+//
+//        if (monitorsHolder.size() > 0)
+//            s3 = " monitorsHolder=" + monitorsHolder.entrySet().stream().map(Object::toString).reduce(" ", String::concat);
+//        logger.logMore_1(module, "getPoolsState: monitorsHolder size=" + monitorsHolder.size() + s3);
+//
+//        if (subscribers.size() > 0)
+//            s4 = " subscribers=" + subscribers.stream().map(ServerDescriptor::toString).reduce(" ", String::concat);
+//        logger.logMore_1(module, "getPoolsState: subscribers size=" + subscribers.size() + s4);
 
     }
 }

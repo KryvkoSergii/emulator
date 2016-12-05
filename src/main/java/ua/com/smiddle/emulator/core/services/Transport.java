@@ -12,8 +12,8 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * @author srg on 09.11.16.
@@ -21,8 +21,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  */
 public class Transport extends Thread {
     private static final String module = "Transport";
-    private Queue<byte[]> input;
-    private Queue<byte[]> output;
+    private BlockingQueue<byte[]> input;
+    private BlockingQueue<byte[]> output;
     private Socket socket;
     private int errorCount = 0;
     private boolean isDone;
@@ -30,36 +30,39 @@ public class Transport extends Thread {
     @Autowired
     @Qualifier("LoggerUtil")
     private LoggerUtil logger;
+    private Sender sender;
 
 
     //Constructors
     public Transport() {
-        input = new ConcurrentLinkedQueue<>();
-        output = new ConcurrentLinkedQueue<>();
+//        input = new ConcurrentLinkedQueue<>();
+//        output = new ConcurrentLinkedQueue<>();
+        input = new LinkedBlockingQueue<>(1500);
+        output = new LinkedBlockingQueue<>(1500);
     }
 
-    public Transport(Socket socket) {
-        input = new ConcurrentLinkedQueue<>();
-        output = new ConcurrentLinkedQueue<>();
-        this.socket = socket;
-        start();
-    }
+//    public Transport(Socket socket) {
+//        input = new ConcurrentLinkedQueue<>();
+//        output = new ConcurrentLinkedQueue<>();
+//        this.socket = socket;
+//        start();
+//    }
 
 
     //Getters and setters
-    public Queue<byte[]> getInput() {
+    public BlockingQueue<byte[]> getInput() {
         return input;
     }
 
-    public void setInput(Queue<byte[]> input) {
+    public void setInput(BlockingQueue<byte[]> input) {
         this.input = input;
     }
 
-    public Queue<byte[]> getOutput() {
+    public BlockingQueue<byte[]> getOutput() {
         return output;
     }
 
-    public void setOutput(Queue<byte[]> output) {
+    public void setOutput(BlockingQueue<byte[]> output) {
         this.output = output;
     }
 
@@ -93,13 +96,16 @@ public class Transport extends Thread {
     @Override
     public void run() {
         logger.logAnyway(module, "started with " + socket.getRemoteSocketAddress());
+
         try (InputStream is = socket.getInputStream();
              OutputStream os = socket.getOutputStream()) {
             byte[] length = new byte[4];
+            sender = new Sender(os, "Transport.Sender.Thread");
+            sender.start();
             while (!isInterrupted() && errorCount <= 5) {
                 try {
                     read(is, length);
-                    write(os);
+//                    write(os);
                 } catch (IOException e) {
                     logger.logAnyway(module, "run: write/read messages for=" + socket.getRemoteSocketAddress() + " throw Exception=" + e.getMessage());
                     errorCount++;
@@ -126,8 +132,8 @@ public class Transport extends Thread {
         }
     }
 
-    private void write(OutputStream os) throws IOException {
-        byte[] b = output.poll();
+    private void write(OutputStream os) throws IOException, InterruptedException {
+        byte[] b = output.take();
         if (b != null) {
             os.write(b);
             os.flush();
@@ -142,10 +148,11 @@ public class Transport extends Thread {
         while (!output.isEmpty()) {
             try {
                 write(socket.getOutputStream());
-            } catch (IOException e) {
+            } catch (Exception e) {
                 logger.logAnyway(module, "destroyBean: writing messages to socket throw Exception=" + e.getMessage());
             }
         }
+        sender.interrupt();
         try {
             socket.getInputStream().close();
             socket.getOutputStream().close();
@@ -155,5 +162,26 @@ public class Transport extends Thread {
         }
     }
 
+    class Sender extends Thread {
+        private OutputStream outputStream;
+        private String name;
+
+        public Sender(OutputStream outputStream, String name) {
+            setName(name);
+            this.outputStream = outputStream;
+        }
+
+        @Override
+        public void run() {
+            while (!isInterrupted() && errorCount <= 5) {
+                try {
+                    write(outputStream);
+                } catch (Exception e) {
+                    errorCount++;
+                    logger.logAnyway(module, "Sender.run: throw Exception=" + e.getMessage());
+                }
+            }
+        }
+    }
 
 }

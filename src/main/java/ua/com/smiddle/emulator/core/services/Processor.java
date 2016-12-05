@@ -2,6 +2,7 @@ package ua.com.smiddle.emulator.core.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import ua.com.smiddle.cti.messages.model.messages.CTI;
 import ua.com.smiddle.cti.messages.model.messages.agent_events.*;
@@ -35,7 +36,7 @@ public class Processor extends Thread {
     private static final String module = "Processor";
     private static final String directionIn = "CTI-Client -> CTI: ";
     private static final String directionOut = "CTI-Client <- CTI: ";
-//    @Autowired
+    //    @Autowired
 //    private ApplicationContext context;
     @Autowired
     @Qualifier("LoggerUtil")
@@ -85,8 +86,8 @@ public class Processor extends Thread {
     private void processIncomingMessages(ServerDescriptor sd) {
         Transport transport = sd.getTransport();
         try {
-            byte[] inputMessage = transport.getInput().poll();
-            if (inputMessage == null) return;
+            byte[] inputMessage = transport.getInput().take();
+//            if (inputMessage == null) return;
             ByteBuffer buffer = ByteBuffer.wrap(inputMessage, 4, 8);
             int code = buffer.getInt();
             switch (code) {
@@ -155,11 +156,13 @@ public class Processor extends Thread {
                     AnswerCallReq answerCallReq = AnswerCallReq.deserializeMessage(inputMessage);
                     logger.logMore_1(module, directionIn + answerCallReq.toString());
                     callsProcessor.processAnswerCallReq(answerCallReq);
+                    break;
                 }
                 case CTI.MSG_CLEAR_CALL_REQ: {
                     ClearCallReq clearCallReq = ClearCallReq.deserializeMessage(inputMessage);
                     logger.logMore_1(module, directionIn + clearCallReq.toString());
                     callsProcessor.processClearCallReq(clearCallReq);
+                    break;
                 }
                 default: {
                     logger.logMore_1(module, "processIncomingMessages: unrecognized message" + Arrays.toString(inputMessage));
@@ -170,71 +173,6 @@ public class Processor extends Thread {
             e.printStackTrace();
         }
     }
-
-//    /**
-//     * AgentPassword игнорируется
-//     *
-//     * @param message
-//     * @throws Exception
-//     */
-//    private void processMSG_SET_AGENT_STATE_REQ(Object message, ServerDescriptor sd) throws Exception {
-//        Transport transport = sd.getTransport();
-//        AgentDescriptor tmpAgent = new AgentDescriptor();
-//        SetAgentStateReq setAgentStateReq = (SetAgentStateReq) message;
-//        for (FloatingField ff : setAgentStateReq.getFloatingFields()) {
-//            if (ff.getTag() == Fields.TAG_AGENT_INSTRUMENT.getTagId())
-//                //обработка инструмента
-//                tmpAgent.setAgentInstrument(ff.getData());
-//            else if (ff.getTag() == Fields.TAG_AGENT_ID.getTagId())
-//                //обработка AgentID
-//                tmpAgent.setAgentID(ff.getData());
-//        }
-//        tmpAgent.setState(setAgentStateReq.getAgentState());
-////        switch (tmpAgent.getState()) {
-////            case AGENT_STATE_LOGOUT:
-////                removeAgentInPools(tmpAgent);
-////                break;
-////            case AGENT_STATE_UNKNOWN:
-////                removeAgentInPools(tmpAgent);
-////                break;
-////            default:
-////                updateAgentInPools(tmpAgent);
-////                break;
-////        }
-//        updateAgentInPools(tmpAgent);
-//        SetAgentStateConf setAgentStateConf = new SetAgentStateConf();
-//        setAgentStateConf.setInvokeID(setAgentStateReq.getInvokeID());
-//        transport.getOutput().add(setAgentStateConf.serializeMessage());
-//        logger.logMore_1(module, directionOut + "processMSG_SET_AGENT_STATE_REQ: prepared " + setAgentStateConf);
-//        agentStateEventProcessor.getAgentEventQueue().add(new AgentEvent(tmpAgent, sd));
-//    }
-
-//    private void updateAgentInPools(AgentDescriptor tmpAgent) {
-//        Integer monitorID = pool.getMonitorsHolder().get(tmpAgent.getAgentInstrument());
-//        if (monitorID != null)
-//            tmpAgent.setMonitorID(monitorID);
-//        if (tmpAgent.getAgentInstrument() != null) {
-//            if (pool.getInstrumentMapping().containsKey(tmpAgent.getAgentInstrument())) {
-//                AgentDescriptor a = pool.getInstrumentMapping().get(tmpAgent.getAgentInstrument());
-//                a.setAgentInstrument(tmpAgent.getAgentInstrument());
-//                if (tmpAgent.getAgentID() != null)
-//                    a.setAgentID(tmpAgent.getAgentID());
-//                a.setMonitorID(tmpAgent.getMonitorID());
-//                a.setState(tmpAgent.getState());
-//                logger.logMore_1(module, "updateAgentInPools: updated in InstrumentMapping=" + a.toString());
-//            } else {
-//                pool.getInstrumentMapping().put(tmpAgent.getAgentInstrument(), tmpAgent);
-//                logger.logMore_1(module, "updateAgentInPools: created in InstrumentMapping=" + tmpAgent.toString());
-//            }
-//        }
-//
-//        if (tmpAgent.getAgentID() != null) {
-//            if (!pool.getAgentMapping().containsKey(tmpAgent.getAgentID())) {
-//                pool.getAgentMapping().put(tmpAgent.getAgentID(), tmpAgent);
-//                logger.logMore_1(module, "updateAgentInPools: created in AgentMapping=" + tmpAgent);
-//            }
-//        }
-//    }
 
     private void processOPEN_REQ(Object message, ServerDescriptor sd) throws Exception {
         OpenReq openReq = (OpenReq) message;
@@ -369,4 +307,17 @@ public class Processor extends Thread {
 //        }
 //        throw new EmulatorException("ServerDescriptor can't be defined for " + transport.getSocket().getRemoteSocketAddress());
 //    }
+
+    @Scheduled(initialDelay = -1, fixedDelay = 20 * 1000)
+    private void clearSubscribers() {
+        for (Iterator iterator = pool.getSubscribers().iterator(); iterator.hasNext(); ) {
+            ServerDescriptor sd = (ServerDescriptor) iterator.next();
+            if (sd.getTransport().isDone() || !checkTimeOut(sd)) {
+                sd.destroy();
+                logger.logAnyway(module, "Removing ServerDescriptor " + sd.getClientID());
+                pool.getSubscribers().remove(sd);
+            }
+        }
+    }
 }
+
