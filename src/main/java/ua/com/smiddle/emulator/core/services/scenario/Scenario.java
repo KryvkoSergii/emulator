@@ -9,6 +9,8 @@ import ua.com.smiddle.emulator.core.services.Pools;
 import ua.com.smiddle.emulator.core.services.calls.CallsProcessor;
 import ua.com.smiddle.emulator.core.util.LoggerUtil;
 
+import java.util.Queue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -29,6 +31,7 @@ public class Scenario {
     private LoggerUtil logger;
     private AtomicInteger connectionCallId = new AtomicInteger(100);
     private boolean startCalling = true;
+    private Queue incommingCallsQueue = new LinkedBlockingQueue<>();
 
     @Scheduled(initialDelay = -1, fixedRate = 15 * 1000)
     private void generateCalls() {
@@ -36,9 +39,10 @@ public class Scenario {
             logger.logAnyway(module, "start generating ACD calls from=" + UnknownFields.ANI + " to=" + UnknownFields.IVR);
             int initCallCount = 0, callCount = 0;
             for (int i = 0; i < pools.getAgentMapping().size(); i++) {
-                callsProcessor.processIncomingACDCall(connectionCallId.getAndIncrement());
+                incommingCallsQueue.add(connectionCallId.getAndIncrement());
                 callCount++;
             }
+            callsProcessor.processIncomingACDCallList(incommingCallsQueue);
             logger.logAnyway(module, "generated calls number=" + (callCount + initCallCount));
             if (callCount > 0) startCalling = false;
         } else {

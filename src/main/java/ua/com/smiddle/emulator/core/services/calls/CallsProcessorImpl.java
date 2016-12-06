@@ -22,6 +22,7 @@ import ua.com.smiddle.emulator.core.services.statistic.Statistic;
 import ua.com.smiddle.emulator.core.util.LoggerUtil;
 
 import java.util.ArrayList;
+import java.util.Queue;
 
 /**
  * @author ksa on 01.12.16.
@@ -48,31 +49,42 @@ public class CallsProcessorImpl implements CallsProcessor {
 
 
     //===============METHODS================================
-    @Async(value = "threadPoolSender")
-    public void processIncomingACDCall(int connectionCallId) {
+    public void processIncomingACDCallList(Queue<Integer> connectionCallIdQueue) {
+        int generatedCallsCount = 0;
+        Integer connectionCallId;
         for (AgentDescriptor ad : pool.getAgentMapping().values()) {
-            try {
-                if (ad.getState() != AgentStates.AGENT_STATE_AVAILABLE)
-                    continue;
-                ad.setState(AgentStates.AGENT_STATE_RESERVED);
-                pool.getCallsHolder().put(connectionCallId, new CallDescriptor(connectionCallId, ad, CallState.NONE_CALL, System.currentTimeMillis()));
-                //установка клиентского сотояния
-                agentStateProcessor.processAgentStateEvent(ad);
-                //звонки
-                BeginCallEvent beginCallEvent = prepareBeginCallEvent(connectionCallId, ad);
-                agentStateProcessor.sendMessageToAllSubscribers(beginCallEvent.serializeMessage());
-                logger.logMore_1(module, directionOut + beginCallEvent.toString());
-                CallDeliveredEvent callDeliveredEvent = prepareCallDeliveredEvent(connectionCallId, ad);
-                agentStateProcessor.sendMessageToAllSubscribers(callDeliveredEvent.serializeMessage());
-                pool.getCallsHolder().get(connectionCallId).setCallState(CallState.DELIVERED_CALL);
-                logger.logMore_1(module, directionOut + callDeliveredEvent.toString());
-                logger.logMore_1(module, "processIncomingACDCall: process connectionCallId=" + connectionCallId + " for agent=" + ad.getAgentID());
-                break;
-            } catch (Exception e) {
-                logger.logAnyway(module, "processIncomingACDCall: for agent=" + ad.getAgentID() + " throw Exception=" + e.getMessage());
+            connectionCallId = connectionCallIdQueue.poll();
+            if (connectionCallId != null && ad.getState() == AgentStates.AGENT_STATE_AVAILABLE) {
+                processIncomingACDCall(connectionCallId, ad);
+                generatedCallsCount++;
             }
-            logger.logMore_1(module, "processIncomingACDCall: unable find agent for connectionCallId=" + connectionCallId);
         }
+        logger.logMore_1(module, "processIncomingACDCallList: start processing incoming ACD calls number=" + generatedCallsCount);
+    }
+
+    @Async(value = "threadPoolSender")
+    public void processIncomingACDCall(int connectionCallId, AgentDescriptor ad) {
+        try {
+//            if (ad.getState() != AgentStates.AGENT_STATE_AVAILABLE)
+//                continue;
+            ad.setState(AgentStates.AGENT_STATE_RESERVED);
+            pool.getCallsHolder().put(connectionCallId, new CallDescriptor(connectionCallId, ad, CallState.NONE_CALL, System.currentTimeMillis()));
+            //установка клиентского сотояния
+            agentStateProcessor.processAgentStateEvent(ad);
+            //звонки
+            BeginCallEvent beginCallEvent = prepareBeginCallEvent(connectionCallId, ad);
+            agentStateProcessor.sendMessageToAllSubscribers(beginCallEvent.serializeMessage());
+            logger.logMore_1(module, directionOut + beginCallEvent.toString());
+            CallDeliveredEvent callDeliveredEvent = prepareCallDeliveredEvent(connectionCallId, ad);
+            agentStateProcessor.sendMessageToAllSubscribers(callDeliveredEvent.serializeMessage());
+            pool.getCallsHolder().get(connectionCallId).setCallState(CallState.DELIVERED_CALL);
+            logger.logMore_1(module, directionOut + callDeliveredEvent.toString());
+            logger.logMore_1(module, "processIncomingACDCall: process connectionCallId=" + connectionCallId + " for agent=" + ad.getAgentID());
+            return;
+        } catch (Exception e) {
+            logger.logAnyway(module, "processIncomingACDCall: for agent=" + ad.getAgentID() + " throw Exception=" + e.getMessage());
+        }
+        logger.logMore_1(module, "processIncomingACDCall: unable find agent for connectionCallId=" + connectionCallId);
     }
 
     @Async(value = "threadPoolSender")
