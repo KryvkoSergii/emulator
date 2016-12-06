@@ -33,7 +33,7 @@ public class Scenario {
     private boolean startCalling = true;
     private Queue incommingCallsQueue = new LinkedBlockingQueue<>();
 
-    @Scheduled(initialDelay = -1, fixedRate = 15 * 1000)
+    @Scheduled(initialDelay = 25 * 1000, fixedRate = 15 * 1000)
     private void generateCalls() {
         if (startCalling) {
             logger.logAnyway(module, "start generating ACD calls from=" + UnknownFields.ANI + " to=" + UnknownFields.IVR);
