@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import ua.com.smiddle.emulator.core.model.Log;
 import ua.com.smiddle.emulator.core.pool.LogQueue;
-import ua.com.smiddle.emulator.core.services.LogPersister;
+import ua.com.smiddle.emulator.core.services.impl.LogPersister;
 import ua.com.smiddle.emulator.core.util.LoggerUtil;
 
 import javax.annotation.PostConstruct;

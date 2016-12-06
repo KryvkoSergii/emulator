@@ -61,8 +61,8 @@ public class AgentStateProcessorImpl implements AgentStateProcessor {
         switch (agentDescriptor.getState()) {
             case AGENT_STATE_LOGIN: {
                 AgentStateEvent ase = buildAgentStateEvent(agentDescriptor);
-                agentDescriptor.setState(AgentStates.AGENT_STATE_NOT_READY);
                 sendMessageToAllSubscribers(ase.serializeMessage());
+                agentDescriptor.setState(AgentStates.AGENT_STATE_NOT_READY);
                 processAgentStateEvent(agentDescriptor);
                 logger.logMore_1(module, directionOut + ase);
                 break;

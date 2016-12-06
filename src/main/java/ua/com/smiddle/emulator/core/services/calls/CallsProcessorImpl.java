@@ -50,14 +50,13 @@ public class CallsProcessorImpl implements CallsProcessor {
     //===============METHODS================================
     @Async(value = "threadPoolSender")
     public void processIncomingACDCall(int connectionCallId) {
-        int callsCounter = 0;
         for (AgentDescriptor ad : pool.getAgentMapping().values()) {
             try {
                 if (ad.getState() != AgentStates.AGENT_STATE_AVAILABLE)
                     continue;
+                ad.setState(AgentStates.AGENT_STATE_RESERVED);
                 pool.getCallsHolder().put(connectionCallId, new CallDescriptor(connectionCallId, ad, CallState.NONE_CALL, System.currentTimeMillis()));
                 //установка клиентского сотояния
-                ad.setState(AgentStates.AGENT_STATE_RESERVED);
                 agentStateProcessor.processAgentStateEvent(ad);
                 //звонки
                 BeginCallEvent beginCallEvent = prepareBeginCallEvent(connectionCallId, ad);
@@ -68,14 +67,12 @@ public class CallsProcessorImpl implements CallsProcessor {
                 pool.getCallsHolder().get(connectionCallId).setCallState(CallState.DELIVERED_CALL);
                 logger.logMore_1(module, directionOut + callDeliveredEvent.toString());
                 logger.logMore_1(module, "processIncomingACDCall: process connectionCallId=" + connectionCallId + " for agent=" + ad.getAgentID());
-                callsCounter++;
-                continue;
+                break;
             } catch (Exception e) {
                 logger.logAnyway(module, "processIncomingACDCall: for agent=" + ad.getAgentID() + " throw Exception=" + e.getMessage());
             }
             logger.logMore_1(module, "processIncomingACDCall: unable find agent for connectionCallId=" + connectionCallId);
         }
-        logger.logMore_0(module, "processIncomingACDCall: processed calls number=" + callsCounter);
     }
 
     @Async(value = "threadPoolSender")

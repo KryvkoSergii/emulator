@@ -2,6 +2,7 @@ package ua.com.smiddle.emulator.core.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import ua.com.smiddle.cti.messages.model.messages.CTI;
@@ -75,9 +76,11 @@ public class Processor extends Thread {
         return System.currentTimeMillis() - sd.getTransport().getLastIncommingMessage() < (sd.getIdleTimeout() * 1000);
     }
 
+    @Async("threadPoolSender")
     private void processIncomingMessages(ServerDescriptor sd) {
         Transport transport = sd.getTransport();
         try {
+            if (transport.getInput().isEmpty()) return;
             byte[] inputMessage = transport.getInput().take();
             ByteBuffer buffer = ByteBuffer.wrap(inputMessage, 4, 8);
             int code = buffer.getInt();
