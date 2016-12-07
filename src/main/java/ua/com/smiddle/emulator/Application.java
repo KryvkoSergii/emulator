@@ -7,6 +7,12 @@ import org.springframework.context.annotation.*;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.web.servlet.config.annotation.DefaultServletHandlerConfigurer;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
+import org.springframework.web.servlet.view.JstlView;
+import org.springframework.web.servlet.view.UrlBasedViewResolver;
 import ua.com.smiddle.emulator.core.model.ServerDescriptor;
 import ua.com.smiddle.emulator.core.services.Transport;
 
@@ -17,13 +23,14 @@ import java.util.concurrent.Executor;
  * @project emulator
  */
 @SpringBootApplication
+@EnableWebMvc
 @Configuration
 @EnableAutoConfiguration
 @EnableScheduling
 @EnableAsync
 @ComponentScan(basePackages = "ua.com.smiddle.emulator.core")
 @PropertySource("classpath:application.properties")
-public class Application {
+public class Application extends WebMvcConfigurerAdapter {
 
     public static void main(String[] args) {
 //        ApplicationContext ctx =
@@ -52,5 +59,38 @@ public class Application {
     public ServerDescriptor clientConnection() {
         return new ServerDescriptor();
     }
+
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        registry
+                .addResourceHandler("/recourses/**")
+                .addResourceLocations("/recourses/");
+    }
+
+    @Override
+    public void configureDefaultServletHandling(DefaultServletHandlerConfigurer configurer) {
+        configurer.enable();
+    }
+
+    @Bean
+    @Description("Вспомагательный класс который указывает фреймворку откуда брать страницы для отображения")
+    public UrlBasedViewResolver setupViewResolver() {
+        UrlBasedViewResolver resolver = new UrlBasedViewResolver();
+        resolver.setPrefix("/WEB-INF/pages/");
+        resolver.setSuffix(".jsp");
+        resolver.setViewClass(JstlView.class);
+        resolver.setOrder(1);
+        return resolver;
+    }
+
+
+//    @Override
+//    public void configureViewResolvers(ViewResolverRegistry registry) {
+//        InternalResourceViewResolver resolver = new InternalResourceViewResolver();
+//        resolver.setPrefix("/WEB-INF/pages/");
+//        resolver.setSuffix(".jsp");
+//        resolver.setViewClass(JstlView.class);
+//        registry.viewResolver(resolver);
+//    }
 
 }

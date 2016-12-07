@@ -21,8 +21,8 @@ public class UnknownFields {
     public static final int AgentAvailabilityStatus = 1;
     public static final short NumFltSkillGroups = 1;
     public static final short NumCTIClients = 0;
-    public static final short NumNamedVariables = 1;
-    public static final short NumNamedArrays = 1;
+    public static final short NumNamedVariables = 0;
+    public static final short NumNamedArrays = 0;
     public static final short CalledPartyDisposition = 1;
     public static final String ANI = "0440000000";
     public static final String IVR = "0800000000";

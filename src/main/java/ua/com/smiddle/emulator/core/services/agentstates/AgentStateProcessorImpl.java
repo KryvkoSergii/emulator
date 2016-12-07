@@ -15,6 +15,7 @@ import ua.com.smiddle.cti.messages.model.messages.common.PeripheralTypes;
 import ua.com.smiddle.emulator.AgentDescriptor;
 import ua.com.smiddle.emulator.core.model.UnknownFields;
 import ua.com.smiddle.emulator.core.services.Pools;
+import ua.com.smiddle.emulator.core.services.statistic.Statistic;
 import ua.com.smiddle.emulator.core.util.LoggerUtil;
 
 import javax.annotation.PostConstruct;
@@ -35,6 +36,9 @@ public class AgentStateProcessorImpl implements AgentStateProcessor {
     @Autowired
     @Qualifier("Pools")
     private Pools pool;
+    @Autowired
+    @Qualifier("Statistic")
+    private Statistic statistic;
 
 
     //Constructors
@@ -62,20 +66,23 @@ public class AgentStateProcessorImpl implements AgentStateProcessor {
             case AGENT_STATE_LOGIN: {
                 AgentStateEvent ase = buildAgentStateEvent(agentDescriptor);
                 sendMessageToAllSubscribers(ase.serializeMessage());
+                statistic.logAgentStatistic(agentDescriptor);
+                logger.logMore_1(module, directionOut + ase);
                 agentDescriptor.setState(AgentStates.AGENT_STATE_NOT_READY);
                 processAgentStateEvent(agentDescriptor);
-                logger.logMore_1(module, directionOut + ase);
                 break;
             }
             case AGENT_STATE_NOT_READY: {
                 AgentStateEvent ase = buildAgentStateEvent(agentDescriptor);
                 sendMessageToAllSubscribers(ase.serializeMessage());
+                statistic.logAgentStatistic(agentDescriptor);
                 logger.logMore_1(module, directionOut + ase);
                 break;
             }
             case AGENT_STATE_LOGOUT: {
                 AgentStateEvent ase = buildAgentStateEvent(agentDescriptor);
                 sendMessageToAllSubscribers(ase.serializeMessage());
+                statistic.logAgentStatistic(agentDescriptor);
                 removeAgentInPools(agentDescriptor);
                 logger.logMore_1(module, directionOut + ase);
                 break;
@@ -83,6 +90,7 @@ public class AgentStateProcessorImpl implements AgentStateProcessor {
             default: {
                 AgentStateEvent ase = buildAgentStateEvent(agentDescriptor);
                 sendMessageToAllSubscribers(ase.serializeMessage());
+                statistic.logAgentStatistic(agentDescriptor);
                 logger.logMore_1(module, directionOut + ase);
                 break;
             }
@@ -127,6 +135,7 @@ public class AgentStateProcessorImpl implements AgentStateProcessor {
 
 
     //===============PRIVATE METHODS================================
+
     private AgentStateEvent buildAgentStateEvent(AgentDescriptor agentDescriptor) {
         AgentStateEvent a = new AgentStateEvent();
         a.setMonitorId(agentDescriptor.getMonitorID());
