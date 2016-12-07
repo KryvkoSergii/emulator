@@ -38,8 +38,8 @@ public class Transport extends Thread {
     public Transport() {
 //        input = new ConcurrentLinkedQueue<>();
 //        output = new ConcurrentLinkedQueue<>();
-        input = new LinkedBlockingQueue<>(1500);
-        output = new LinkedBlockingQueue<>(1500);
+        input = new LinkedBlockingQueue<>();
+        output = new LinkedBlockingQueue<>();
     }
 
 //    public Transport(Socket socket) {
