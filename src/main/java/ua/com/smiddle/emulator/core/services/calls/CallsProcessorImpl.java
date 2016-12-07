@@ -77,7 +77,10 @@ public class CallsProcessorImpl implements CallsProcessor {
             logger.logMore_1(module, directionOut + beginCallEvent.toString());
             CallDeliveredEvent callDeliveredEvent = prepareCallDeliveredEvent(connectionCallId, ad);
             agentStateProcessor.sendMessageToAllSubscribers(callDeliveredEvent.serializeMessage());
-            pool.getCallsHolder().get(connectionCallId).setCallState(CallState.DELIVERED_CALL);
+            CallDescriptor callDescriptor = pool.getCallsHolder().get(connectionCallId);
+            callDescriptor.setCallState(CallState.DELIVERED_CALL);
+
+            statistic.logCallStatistic(callDescriptor);
             logger.logMore_1(module, directionOut + callDeliveredEvent.toString());
             logger.logMore_1(module, "processIncomingACDCall: process connectionCallId=" + connectionCallId + " for agent=" + ad.getAgentID());
             return;
@@ -89,8 +92,8 @@ public class CallsProcessorImpl implements CallsProcessor {
 
     @Async(value = "threadPoolSender")
     public void processAnswerCallReq(AnswerCallReq req) throws Exception {
-        CallDescriptor cd = pool.getCallsHolder().get(req.getConnectionCallID());
-        AgentDescriptor ad = cd.getAgentDescriptor();
+        CallDescriptor callDescriptor = pool.getCallsHolder().get(req.getConnectionCallID());
+        AgentDescriptor ad = callDescriptor.getAgentDescriptor();
 
         AnswerCallConf answerCallConf = new AnswerCallConf(req.getInvokeId());
         agentStateProcessor.sendMessageToAllSubscribers(answerCallConf.serializeMessage());
@@ -106,7 +109,8 @@ public class CallsProcessorImpl implements CallsProcessor {
         CallEstablishedEvent callEstablishedEvent = prepareCallEstablishedEvent(req.getConnectionCallID(), pool.getCallsHolder().get(req.getConnectionCallID()).getAgentDescriptor());
         agentStateProcessor.sendMessageToAllSubscribers(callEstablishedEvent.serializeMessage());
         logger.logMore_1(module, directionOut + callEstablishedEvent.toString());
-        cd.setCallState(CallState.ACTIVE_CALL);
+        callDescriptor.setCallState(CallState.ACTIVE_CALL);
+        statistic.logCallStatistic(callDescriptor);
     }
 
     @Async(value = "threadPoolSender")
@@ -114,7 +118,6 @@ public class CallsProcessorImpl implements CallsProcessor {
         ClearCallConf clearCallConf = new ClearCallConf(req.getInvokeId());
         agentStateProcessor.sendMessageToAllSubscribers(clearCallConf.serializeMessage());
         logger.logMore_1(module, directionOut + clearCallConf.toString());
-
         processCallEnd(req.getConnectionCallID());
     }
 
@@ -130,10 +133,10 @@ public class CallsProcessorImpl implements CallsProcessor {
 
     //===============PRIVATE METHODS================================
     private void processCallEnd(int connectionCallId) throws Exception {
-        CallDescriptor cd = pool.getCallsHolder().get(connectionCallId);
-        AgentDescriptor ad = cd.getAgentDescriptor();
+        CallDescriptor callDescriptor = pool.getCallsHolder().get(connectionCallId);
+        AgentDescriptor ad = callDescriptor.getAgentDescriptor();
 
-        int duration = (int) (System.currentTimeMillis() - cd.getCallStart()) / 1000;
+        int duration = (int) (System.currentTimeMillis() - callDescriptor.getCallStart()) / 1000;
 
         logger.logMore_1(module, "processCallEnd: processing call end connectionCallId=" + connectionCallId + " agentId="
                 + ad.getAgentID() + " call duration=" + duration + "sec");
@@ -149,9 +152,10 @@ public class CallsProcessorImpl implements CallsProcessor {
         agentStateProcessor.sendMessageToAllSubscribers(endCallEvent.serializeMessage());
         logger.logMore_1(module, directionOut + endCallEvent.toString());
 
-        cd.setCallState(CallState.CLEARED_CALL);
-        cd.setCallStart(duration);
-        removeCalls(cd.getConnectionCallID());
+        callDescriptor.setCallState(CallState.CLEARED_CALL);
+        callDescriptor.setCallStart(duration);
+        statistic.logCallStatistic(callDescriptor);
+        removeCalls(callDescriptor.getConnectionCallID());
     }
 
     private EndCallEvent prepareEndCallEvent(int connectionCallId, AgentDescriptor ad) {
