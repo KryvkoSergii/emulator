@@ -121,18 +121,21 @@ public class Transport extends Thread {
     }
 
     private void read(InputStream is, byte[] length) throws IOException {
-        if (is.available() > 0) {
-            lastIncommingMessage = System.currentTimeMillis();
-            is.read(length);
-            byte[] messagePart = new byte[ByteBuffer.wrap(length).getInt() + 4];
-            is.read(messagePart);
-            ByteBuffer buffer = ByteBuffer.allocate(length.length + messagePart.length);
-            buffer.put(length).put(messagePart);
-            byte[] message = buffer.array();
-            input.add(message);
-            if (logger.getDebugLevel()>2)
-                logger.logMore_2(module, "port:" + port + ":" + "RECEIVED:" + Arrays.toString(message));
-        }
+//        if (is.available() > 0) {
+        is.read(length);
+        byte[] messagePart = new byte[ByteBuffer.wrap(length).getInt() + 8];
+        is.read(messagePart, 4, messagePart.length - 4);
+        for (byte i = 0; i < length.length; i++)
+            messagePart[i] = length[i];
+//            ByteBuffer buffer = ByteBuffer.allocate(length.length + messagePart.length);
+//            buffer.put(length).put(messagePart);
+//            byte[] message = buffer.array();
+//            input.add(message);
+        input.add(messagePart);
+        lastIncommingMessage = System.currentTimeMillis();
+        if (logger.getDebugLevel() > 2)
+            logger.logMore_2(module, "port:" + port + ":" + "RECEIVED:" + Arrays.toString(messagePart));
+//        }
     }
 
     private void write(OutputStream os) throws IOException, InterruptedException {
@@ -140,7 +143,7 @@ public class Transport extends Thread {
         if (b != null) {
             os.write(b);
             os.flush();
-            if (logger.getDebugLevel()>2)
+            if (logger.getDebugLevel() > 2)
                 logger.logMore_2(module, currentThread().getName() + ":" + "WROTE:" + Arrays.toString(b));
         }
     }

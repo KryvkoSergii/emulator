@@ -64,6 +64,11 @@ public class Processor extends Thread {
         logger.logAnyway(module, "started...");
         AtomicBoolean needSleep = new AtomicBoolean();
         while (!isInterrupted()) {
+            if (pool.getSubscribers().isEmpty())
+                try {
+                    currentThread().sleep(100);
+                } catch (InterruptedException e) {
+                }
             needSleep.set(false);
             pool.getSubscribers().stream().forEach(serverDescriptor -> {
                 if (serverDescriptor.getTransport().getOutput().isEmpty())
@@ -181,13 +186,12 @@ public class Processor extends Thread {
                     break;
                 }
                 default: {
-                    if (logger.getDebugLevel() > 1)
-                        logger.logMore_1(module, "processIncomingMessages: unrecognized message" + Arrays.toString(inputMessage));
+//                    if (logger.getDebugLevel() > 1)
+                    logger.logAnyway(module, "processIncomingMessages: unrecognized message" + Arrays.toString(inputMessage));
                 }
             }
         } catch (Exception e) {
-            if (logger.getDebugLevel() > 0)
-                logger.logMore_0(module, "processIncomingMessages: throw Exception=" + e.getMessage());
+            logger.logAnyway(module, "processIncomingMessages: throw Exception=" + e.getMessage());
             e.printStackTrace();
         }
     }
