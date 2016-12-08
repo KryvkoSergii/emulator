@@ -37,7 +37,8 @@ public class Scenario {
 
     @Scheduled(initialDelay = 25 * 1000, fixedRate = 10 * 1000)
     private void generateCalls() {
-        logger.logAnyway(module, "start generating ACD calls from=" + UnknownFields.ANI + " to=" + UnknownFields.IVR);
+        if (logger.getDebugLevel() > 0)
+            logger.logAnyway(module, "start generating ACD calls from=" + UnknownFields.ANI + " to=" + UnknownFields.IVR);
 //        int initCallCount = 0, callCount = 0;
         final AtomicInteger callCountStart = new AtomicInteger(0);
         pools.getAgentMapping().values().stream()
@@ -52,12 +53,17 @@ public class Scenario {
 //            callCount++;
 //        }
         callsProcessor.processIncomingACDCallList(incommingCallsQueue);
-        logger.logAnyway(module, "generated calls start number=" + (callCountStart.get()));
+        if (callCountStart.get() > 0)
+            logger.logAnyway(module, "generated calls start number=" + callCountStart.get());
+        else {
+            if (logger.getDebugLevel() > 1)
+                logger.logMore_0(module, "generated calls start number=" + callCountStart.get());
+        }
     }
 
     @Scheduled(initialDelay = 40 * 1000, fixedRate = 10 * 1000)
     private void dropCalls() {
-        logger.logAnyway(module, "start dropping ACD calls...");
+        if (logger.getDebugLevel() > 0) logger.logMore_0(module, "start dropping ACD calls...");
         final AtomicInteger callCountDrop = new AtomicInteger(0);
         pools.getCallsHolder().values().stream()
                 .filter(callDescriptor -> ((System.currentTimeMillis() - callDescriptor.getCallStart()) > 15 * 1000))
@@ -66,7 +72,12 @@ public class Scenario {
                     callsProcessor.processACDCallsEndByCustomer(callDescriptor1.getConnectionCallID());
                     callCountDrop.incrementAndGet();
                 });
-        logger.logAnyway(module, "initiated dropped ACD calls number=" + callCountDrop.get());
+        if (callCountDrop.get() > 0)
+            logger.logAnyway(module, "initiated dropped ACD calls number=" + callCountDrop.get());
+        else {
+            if (logger.getDebugLevel() > 1)
+                logger.logMore_0(module, "initiated dropped ACD calls number=" + callCountDrop.get());
+        }
 //        for (int connectionCallId : pools.getCallsHolder().keySet()) {
 //            callsProcessor.processACDCallsEndByCustomer(connectionCallId);
 //            callCountDrop++;

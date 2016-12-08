@@ -67,7 +67,8 @@ public class AgentStateProcessorImpl implements AgentStateProcessor {
                 AgentStateEvent ase = buildAgentStateEvent(agentDescriptor);
                 sendMessageToAllSubscribers(ase.serializeMessage());
                 statistic.logAgentStatistic(agentDescriptor);
-                logger.logMore_1(module, directionOut + ase);
+                if (logger.getDebugLevel() > 1)
+                    logger.logMore_1(module, directionOut + ase);
                 agentDescriptor.setState(AgentStates.AGENT_STATE_NOT_READY);
                 processAgentStateEvent(agentDescriptor);
                 break;
@@ -76,7 +77,8 @@ public class AgentStateProcessorImpl implements AgentStateProcessor {
                 AgentStateEvent ase = buildAgentStateEvent(agentDescriptor);
                 sendMessageToAllSubscribers(ase.serializeMessage());
                 statistic.logAgentStatistic(agentDescriptor);
-                logger.logMore_1(module, directionOut + ase);
+                if (logger.getDebugLevel() > 1)
+                    logger.logMore_1(module, directionOut + ase);
                 break;
             }
             case AGENT_STATE_LOGOUT: {
@@ -84,14 +86,16 @@ public class AgentStateProcessorImpl implements AgentStateProcessor {
                 sendMessageToAllSubscribers(ase.serializeMessage());
                 statistic.logAgentStatistic(agentDescriptor);
                 removeAgentInPools(agentDescriptor);
-                logger.logMore_1(module, directionOut + ase);
+                if (logger.getDebugLevel() > 1)
+                    logger.logMore_1(module, directionOut + ase);
                 break;
             }
             default: {
                 AgentStateEvent ase = buildAgentStateEvent(agentDescriptor);
                 sendMessageToAllSubscribers(ase.serializeMessage());
                 statistic.logAgentStatistic(agentDescriptor);
-                logger.logMore_1(module, directionOut + ase);
+                if (logger.getDebugLevel() > 1)
+                    logger.logMore_1(module, directionOut + ase);
                 break;
             }
         }
@@ -124,7 +128,8 @@ public class AgentStateProcessorImpl implements AgentStateProcessor {
         SetAgentStateConf setAgentStateConf = new SetAgentStateConf();
         setAgentStateConf.setInvokeID(setAgentStateReq.getInvokeID());
         sendMessageToAllSubscribers(setAgentStateConf.serializeMessage());
-        logger.logMore_1(module, directionOut + "processSetAgentStateReq: prepared " + setAgentStateConf);
+        if (logger.getDebugLevel() > 1)
+            logger.logMore_1(module, directionOut + "processSetAgentStateReq: prepared " + setAgentStateConf);
         processAgentStateEvent(tmpAgent);
     }
 
@@ -167,7 +172,8 @@ public class AgentStateProcessorImpl implements AgentStateProcessor {
             pool.getAgentMapping().remove(tmpAgent.getAgentID());
 //        if (tmpAgent.getMonitorID() != null)
 //            pool.getMonitorsHolder().remove(tmpAgent.getMonitorID());
-        logger.logMore_2(module, "removed for=" + tmpAgent.getAgentID() + " " + tmpAgent.getAgentInstrument());
+        if (logger.getDebugLevel() > 2)
+            logger.logMore_2(module, "removed for=" + tmpAgent.getAgentID() + " " + tmpAgent.getAgentInstrument());
     }
 
     private void updateAgentInPools(AgentDescriptor tmpAgent) {
@@ -182,17 +188,20 @@ public class AgentStateProcessorImpl implements AgentStateProcessor {
                     a.setAgentID(tmpAgent.getAgentID());
                 a.setMonitorID(tmpAgent.getMonitorID());
                 a.setState(tmpAgent.getState());
-                logger.logMore_1(module, "updateAgentInPools: updated in InstrumentMapping=" + a.toString());
+                if (logger.getDebugLevel() > 1)
+                    logger.logMore_1(module, "updateAgentInPools: updated in InstrumentMapping=" + a.toString());
             } else {
                 pool.getInstrumentMapping().put(tmpAgent.getAgentInstrument(), tmpAgent);
-                logger.logMore_1(module, "updateAgentInPools: created in InstrumentMapping=" + tmpAgent.toString());
+                if (logger.getDebugLevel() > 1)
+                    logger.logMore_1(module, "updateAgentInPools: created in InstrumentMapping=" + tmpAgent.toString());
             }
         }
 
         if (tmpAgent.getAgentID() != null) {
             if (!pool.getAgentMapping().containsKey(tmpAgent.getAgentID())) {
                 pool.getAgentMapping().put(tmpAgent.getAgentID(), tmpAgent);
-                logger.logMore_1(module, "updateAgentInPools: created in AgentMapping=" + tmpAgent);
+                if (logger.getDebugLevel() > 1)
+                    logger.logMore_1(module, "updateAgentInPools: created in AgentMapping=" + tmpAgent);
             }
         }
     }

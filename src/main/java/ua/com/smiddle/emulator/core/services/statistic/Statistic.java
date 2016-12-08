@@ -95,7 +95,8 @@ public class Statistic {
     public void clearAgentStatistic(String marker) {
         agentStatistic.clear();
         lastCleared = System.currentTimeMillis();
-        logger.logMore_0(module, marker + ": cleared Agent Statistic");
+        if (logger.getDebugLevel()>0)
+            logger.logMore_0(module, marker + ": cleared Agent Statistic");
     }
 
     //    @Scheduled(fixedDelay = -1, fixedRate = 60 * 1000)

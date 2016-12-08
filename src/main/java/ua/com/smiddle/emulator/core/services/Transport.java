@@ -130,7 +130,8 @@ public class Transport extends Thread {
             buffer.put(length).put(messagePart);
             byte[] message = buffer.array();
             input.add(message);
-            logger.logMore_2(module, "port:" + port + ":" + "RECEIVED:" + Arrays.toString(message));
+            if (logger.getDebugLevel()>2)
+                logger.logMore_2(module, "port:" + port + ":" + "RECEIVED:" + Arrays.toString(message));
         }
     }
 
@@ -139,7 +140,8 @@ public class Transport extends Thread {
         if (b != null) {
             os.write(b);
             os.flush();
-            logger.logMore_2(module, currentThread().getName() + ":" + "WROTE:" + Arrays.toString(b));
+            if (logger.getDebugLevel()>2)
+                logger.logMore_2(module, currentThread().getName() + ":" + "WROTE:" + Arrays.toString(b));
         }
     }
 

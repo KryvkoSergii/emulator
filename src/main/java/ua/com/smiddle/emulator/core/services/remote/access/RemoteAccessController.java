@@ -36,17 +36,21 @@ public class RemoteAccessController {
     @RequestMapping(value = "/agents", method = RequestMethod.GET,
             consumes = "application/json; charset=UTF-8", produces = "application/json; charset=UTF-8")
     public Object getAgents(HttpServletResponse response) {
-        logger.logMore_1(module, "getAgents: got request");
+        if (logger.getDebugLevel()>1)
+            logger.logMore_1(module, "getAgents: got request");
         Collection<AgentDescriptor> agents = pool.getAgentMapping().values();
-        logger.logMore_1(module, "getAgents: returned size=" + agents.size());
+        if (logger.getDebugLevel()>1)
+            logger.logMore_1(module, "getAgents: returned size=" + agents.size());
         return agents;
     }
 
     @RequestMapping(value = "/agents_stat", method = RequestMethod.GET, produces = "application/json; charset=UTF-8")
     public Object getAgentsStatistic(HttpServletResponse response) {
-        logger.logMore_1(module, "getAgentsStatistic: got request");
+        if (logger.getDebugLevel()>1)
+            logger.logMore_1(module, "getAgentsStatistic: got request");
         Collection<AgentStatistic> agents = statistic.getAgentStatistic().values();
-        logger.logMore_1(module, "getAgentsStatistic: returned size=" + agents.size());
+        if (logger.getDebugLevel()>1)
+            logger.logMore_1(module, "getAgentsStatistic: returned size=" + agents.size());
         return agents;
     }
 }

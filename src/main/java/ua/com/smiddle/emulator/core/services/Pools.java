@@ -137,10 +137,12 @@ public class Pools {
             logger.logMore_2(module, "callsHolder: callsHolder size=" + callsHolder.size() + s5);
         }
 
-        logger.logMore_1(module, "getPoolsState: agentMapping size=" + agentMapping.size() + s1);
-        logger.logMore_1(module, "getPoolsState: instrumentMapping size=" + instrumentMapping.size() + s2);
-        logger.logMore_1(module, "getPoolsState: monitorsHolder size=" + monitorsHolder.size() + s3);
-        logger.logMore_1(module, "getPoolsState: subscribers size=" + subscribers.size() + s4);
-        logger.logMore_1(module, "callsHolder: callsHolder size=" + callsHolder.size() + s5);
+        if (logger.getDebugLevel()>1) {
+            logger.logMore_1(module, "getPoolsState: agentMapping size=" + agentMapping.size() + s1);
+            logger.logMore_1(module, "getPoolsState: instrumentMapping size=" + instrumentMapping.size() + s2);
+            logger.logMore_1(module, "getPoolsState: monitorsHolder size=" + monitorsHolder.size() + s3);
+            logger.logMore_1(module, "getPoolsState: subscribers size=" + subscribers.size() + s4);
+            logger.logMore_1(module, "callsHolder: callsHolder size=" + callsHolder.size() + s5);
+        }
     }
 }

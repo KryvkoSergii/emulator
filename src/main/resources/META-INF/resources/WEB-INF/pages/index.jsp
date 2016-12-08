@@ -26,7 +26,7 @@
             </tr>
             <tr>
                 <td><h4>Last agent statistic clear:</h4></td>
-                <td><h4> ${TimeStamp}</h4></td>
+                <td><h4> ${LastCleared}</h4></td>
             </tr>
         </table>
         <h4>Pool Statistic</h4>
