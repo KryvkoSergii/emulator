@@ -2,6 +2,7 @@ package ua.com.smiddle.emulator.core.services.statistic;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import ua.com.smiddle.emulator.AgentDescriptor;
 import ua.com.smiddle.emulator.core.model.AgentStatistic;
@@ -10,9 +11,6 @@ import ua.com.smiddle.emulator.core.services.Pools;
 import ua.com.smiddle.emulator.core.util.LoggerUtil;
 
 import javax.annotation.PostConstruct;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -30,19 +28,20 @@ public class Statistic {
     @Qualifier("LoggerUtil")
     private LoggerUtil logger;
     private final String module = "Statistic";
-    private List<CallDescriptor> callDescriptors = Collections.synchronizedList(new ArrayList<>());
+    //    private List<CallDescriptor> callDescriptors = Collections.synchronizedList(new ArrayList<>());
     private Map<Long, AgentStatistic> agentStatistic = new ConcurrentHashMap<>();
     private AtomicLong agentStatisticIdGenerator = new AtomicLong(1000);
+    private volatile long lastCleared = 0;
 
 
     //Getters and setters
-    public List<CallDescriptor> getCallDescriptors() {
-        return callDescriptors;
-    }
-
-    public void setCallDescriptors(List<CallDescriptor> callDescriptors) {
-        this.callDescriptors = callDescriptors;
-    }
+//    public List<CallDescriptor> getCallDescriptors() {
+//        return callDescriptors;
+//    }
+//
+//    public void setCallDescriptors(List<CallDescriptor> callDescriptors) {
+//        this.callDescriptors = callDescriptors;
+//    }
 
     public Map<Long, AgentStatistic> getAgentStatistic() {
         return agentStatistic;
@@ -52,20 +51,19 @@ public class Statistic {
         this.agentStatistic = agentStatistic;
     }
 
+    public long getLastCleared() {
+        return lastCleared;
+    }
+
+    public void setLastCleared(long lastCleared) {
+        this.lastCleared = lastCleared;
+    }
 
     //Methods
     @PostConstruct
     private void init() {
         logger.logAnyway(module, "initialized...");
     }
-
-//    @Scheduled(fixedDelay = -1, fixedRate = 60 * 1000)
-//    private void printProcessedCalls() {
-//        String s4 = "";
-//        if (callDescriptors.size() > 0)
-//            s4 = " callsHolder=" + callDescriptors.stream().map(CallDescriptor::toString).reduce(" ", String::concat);
-//        logger.logMore_1(module, "callsHolder: callsHolder size=" + callDescriptors.size() + s4);
-//    }
 
     public void logAgentStatistic(AgentDescriptor agentDescriptor) {
         AgentStatistic agentStatistic = getAgentStatistic().get(agentDescriptor.getAgentStatisticId());
@@ -91,6 +89,27 @@ public class Statistic {
     public void logCallStatistic(CallDescriptor callDescriptor) {
         long id = callDescriptor.getAgentDescriptor().getAgentStatisticId();
         AgentStatistic as = getAgentStatistic().get(id);
-        as.getCallsStatistic().add(new Object[]{System.currentTimeMillis(),callDescriptor.getCallState()});
+        as.getCallsStatistic().add(new Object[]{System.currentTimeMillis(), callDescriptor.getCallState()});
+    }
+
+    public void clearAgentStatistic(String marker) {
+        agentStatistic.clear();
+        lastCleared = System.currentTimeMillis();
+        logger.logMore_0(module, marker + ": cleared Agent Statistic");
+    }
+
+    //    @Scheduled(fixedDelay = -1, fixedRate = 60 * 1000)
+//    private void printProcessedCalls() {
+//        String s4 = "";
+//        if (callDescriptors.size() > 0)
+//            s4 = " callsHolder=" + callDescriptors.stream().map(CallDescriptor::toString).reduce(" ", String::concat);
+//        logger.logMore_1(module, "callsHolder: callsHolder size=" + callDescriptors.size() + s4);
+//    }
+
+    @Scheduled(fixedDelay = -1, fixedRate = 2 * 60 * 1000)
+    private void clearAgentStatisticScheduled() {
+        if (System.currentTimeMillis() - lastCleared > 5 * 60 * 1000) {
+            clearAgentStatistic("clearAgentStatisticScheduled");
+        }
     }
 }

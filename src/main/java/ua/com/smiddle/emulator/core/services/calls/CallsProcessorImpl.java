@@ -292,12 +292,13 @@ public class CallsProcessorImpl implements CallsProcessor {
         if (cd != null) {
             logger.logMore_1(module, "removeCalls: removed call=" + connectionCallId
                     + " state=" + cd.getCallState() + " agent=" + cd.getAgentDescriptor().getAgentID());
-            putProcessedCallsToStatistic(cd);
+//            putProcessedCallsToStatistic(cd);
         } else logger.logMore_1(module, "removeCalls: call id=" + connectionCallId + " not exists");
     }
 
-    private void putProcessedCallsToStatistic(CallDescriptor cd) {
-        cd.setAgentDescriptor(null);
-        statistic.getCallDescriptors().add(cd);
-    }
+//    @Deprecated
+//    private void putProcessedCallsToStatistic(CallDescriptor cd) {
+//        cd.setAgentDescriptor(null);
+//        statistic.getCallDescriptors().add(cd);
+//    }
 }

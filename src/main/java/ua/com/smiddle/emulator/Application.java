@@ -7,12 +7,13 @@ import org.springframework.context.annotation.*;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.web.servlet.ViewResolver;
 import org.springframework.web.servlet.config.annotation.DefaultServletHandlerConfigurer;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
+import org.springframework.web.servlet.view.InternalResourceViewResolver;
 import org.springframework.web.servlet.view.JstlView;
-import org.springframework.web.servlet.view.UrlBasedViewResolver;
 import ua.com.smiddle.emulator.core.model.ServerDescriptor;
 import ua.com.smiddle.emulator.core.services.Transport;
 
@@ -74,23 +75,19 @@ public class Application extends WebMvcConfigurerAdapter {
 
     @Bean
     @Description("Вспомагательный класс который указывает фреймворку откуда брать страницы для отображения")
-    public UrlBasedViewResolver setupViewResolver() {
-        UrlBasedViewResolver resolver = new UrlBasedViewResolver();
+    public ViewResolver setupViewResolver() {
+        InternalResourceViewResolver resolver = new InternalResourceViewResolver();
         resolver.setPrefix("/WEB-INF/pages/");
         resolver.setSuffix(".jsp");
         resolver.setViewClass(JstlView.class);
         resolver.setOrder(1);
         return resolver;
-    }
-
-
-//    @Override
-//    public void configureViewResolvers(ViewResolverRegistry registry) {
-//        InternalResourceViewResolver resolver = new InternalResourceViewResolver();
+//
+//        UrlBasedViewResolver resolver = new UrlBasedViewResolver();
 //        resolver.setPrefix("/WEB-INF/pages/");
 //        resolver.setSuffix(".jsp");
 //        resolver.setViewClass(JstlView.class);
-//        registry.viewResolver(resolver);
-//    }
-
+//        resolver.setOrder(1);
+//        return resolver;
+    }
 }

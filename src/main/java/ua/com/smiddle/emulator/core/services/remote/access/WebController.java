@@ -22,6 +22,7 @@ import java.util.List;
 @Controller("WebController")
 @RequestMapping("/cti-emulator/web")
 public class WebController {
+    private final String module = "WebController";
     @Autowired
     @Qualifier(value = "Statistic")
     private Statistic statistic;
@@ -30,16 +31,14 @@ public class WebController {
     private Pools pools;
 
     @RequestMapping(value = {"/agents_stat", "/index.html"}, method = RequestMethod.GET)
-    public ModelAndView getIndexPage() {
-        ModelAndView model = new ModelAndView("index");
-        model.addObject("statistic", convert(statistic.getAgentStatistic().values()));
-        model.addObject("TimeStamp", new Date());
-        model.addObject("AgentMapping", pools.getAgentMapping().size());
-        model.addObject("InstrumentMapping", pools.getInstrumentMapping().size());
-        model.addObject("Subscribers", pools.getSubscribers().size());
-        model.addObject("CallsHolder", pools.getCallsHolder().size());
-        model.addObject("MonitorsHolder", pools.getMonitorsHolder().size());
-        return model;
+    public ModelAndView getIndexPageWeb() {
+        return prepareStat();
+    }
+
+    @RequestMapping(value = {"/agents_stat_clear"}, method = RequestMethod.GET)
+    public String clearAgentStatisticWeb() {
+        statistic.clearAgentStatistic(module + ":clearAgentStatisticWeb");
+        return "redirect:agents_stat";
     }
 
     private Collection convert(Collection<AgentStatistic> collection) {
@@ -57,4 +56,16 @@ public class WebController {
         return l;
     }
 
+    private ModelAndView prepareStat() {
+        ModelAndView model = new ModelAndView("index");
+        model.addObject("statistic", convert(statistic.getAgentStatistic().values()));
+        model.addObject("TimeStamp", new Date());
+        model.addObject("LastCleared", new Date(statistic.getLastCleared()));
+        model.addObject("AgentMapping", pools.getAgentMapping().size());
+        model.addObject("InstrumentMapping", pools.getInstrumentMapping().size());
+        model.addObject("Subscribers", pools.getSubscribers().size());
+        model.addObject("CallsHolder", pools.getCallsHolder().size());
+        model.addObject("MonitorsHolder", pools.getMonitorsHolder().size());
+        return model;
+    }
 }

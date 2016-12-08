@@ -61,19 +61,20 @@ public class Processor extends Thread {
     @Override
     public void run() {
         logger.logAnyway(module, "started...");
-        boolean needSleep;
+//        boolean needSleep;
         while (!isInterrupted()) {
-            needSleep = true;
+//            needSleep = false;
             for (Iterator iterator = pool.getSubscribers().iterator(); iterator.hasNext(); ) {
                 ServerDescriptor sd = (ServerDescriptor) iterator.next();
-                if (!sd.getTransport().getOutput().isEmpty()) needSleep = false;
+//                if (!sd.getTransport().getOutput().isEmpty()) needSleep = true;
                 processIncomingMessages(sd);
             }
-            if (needSleep)
-                try {
-                    currentThread().sleep(100);
-                } catch (InterruptedException e) {
-                }
+//            if (needSleep) {
+//                try {
+//                    currentThread().sleep(100);
+//                } catch (InterruptedException e) {
+//                }
+//            }
         }
     }
 
