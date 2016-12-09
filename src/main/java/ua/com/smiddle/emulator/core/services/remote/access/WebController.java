@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.servlet.ModelAndView;
 import ua.com.smiddle.emulator.core.model.AgentStatistic;
 import ua.com.smiddle.emulator.core.services.Pools;
+import ua.com.smiddle.emulator.core.services.Processor;
+import ua.com.smiddle.emulator.core.services.agentstates.AgentStateProcessor;
 import ua.com.smiddle.emulator.core.services.statistic.Statistic;
 
 import java.util.ArrayList;
@@ -29,6 +31,12 @@ public class WebController {
     @Autowired
     @Qualifier(value = "Pools")
     private Pools pools;
+    @Autowired
+    @Qualifier("AgentStateProcessorImpl")
+    private AgentStateProcessor agentStateProcessor;
+    @Autowired
+    @Qualifier("ProcessorImpl")
+    private Processor processor;
 
     @RequestMapping(value = {"/agents_stat", "/index.html"}, method = RequestMethod.GET)
     public ModelAndView getIndexPageWeb() {
@@ -67,6 +75,8 @@ public class WebController {
         model.addObject("Subscribers", pools.getSubscribers().size());
         model.addObject("CallsHolder", pools.getCallsHolder().size());
         model.addObject("MonitorsHolder", pools.getMonitorsHolder().size());
+        model.addObject("readMessages", processor.getMessageReadCounter().get());
+        model.addObject("wroteMessages", agentStateProcessor.getMessageWroteCounter().get());
         return model;
     }
 }

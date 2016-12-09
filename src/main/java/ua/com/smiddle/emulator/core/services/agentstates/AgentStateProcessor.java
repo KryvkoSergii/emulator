@@ -2,6 +2,8 @@ package ua.com.smiddle.emulator.core.services.agentstates;
 
 import ua.com.smiddle.emulator.AgentDescriptor;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * @author ksa on 02.12.16.
  * @project emulator
@@ -31,4 +33,7 @@ public interface AgentStateProcessor {
      * @param message
      */
     void sendMessageToAllSubscribers(byte[] message);
+
+    AtomicInteger getMessageWroteCounter();
+
 }

@@ -29,6 +29,14 @@
                 <td><h4> ${LastCleared}</h4></td>
             </tr>
         </table>
+        <table>
+            <tr>
+                <td>read messages:</td>
+                <td>${readMessages}</td>
+                <td>wrote messages:</td>
+                <td>${wroteMessages}</td>
+            </tr>
+        </table>
         <h4>Pool Statistic</h4>
         <table border="1">
             <thead>

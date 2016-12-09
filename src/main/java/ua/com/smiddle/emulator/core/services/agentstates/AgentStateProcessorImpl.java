@@ -19,6 +19,7 @@ import ua.com.smiddle.emulator.core.services.statistic.Statistic;
 import ua.com.smiddle.emulator.core.util.LoggerUtil;
 
 import javax.annotation.PostConstruct;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author ksa on 02.12.16.
@@ -39,10 +40,17 @@ public class AgentStateProcessorImpl implements AgentStateProcessor {
     @Autowired
     @Qualifier("Statistic")
     private Statistic statistic;
+    private final AtomicInteger messageWroteCounter = new AtomicInteger();
 
 
     //Constructors
     public AgentStateProcessorImpl() {
+    }
+
+
+    //Getters and setters
+    public AtomicInteger getMessageWroteCounter() {
+        return messageWroteCounter;
     }
 
 
@@ -135,6 +143,7 @@ public class AgentStateProcessorImpl implements AgentStateProcessor {
 
     @Override
     public void sendMessageToAllSubscribers(byte[] message) {
+        messageWroteCounter.getAndIncrement();
         pool.getSubscribers().forEach(serverDescriptor -> serverDescriptor.getTransport().getOutput().add(message));
     }
 
