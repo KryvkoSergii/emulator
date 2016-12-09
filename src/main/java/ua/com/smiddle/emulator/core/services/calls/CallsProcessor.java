@@ -19,5 +19,8 @@ public interface CallsProcessor {
 
     void processACDCallsEndByCustomer(int connectionCallId);
 
+    @Deprecated
     void processIncomingACDCallList(Queue<Integer> connectionCallIdQueue);
+
+    void processIncomingACDCallList();
 }

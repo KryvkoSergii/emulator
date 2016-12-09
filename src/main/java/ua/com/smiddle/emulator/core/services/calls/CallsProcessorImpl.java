@@ -23,6 +23,10 @@ import ua.com.smiddle.emulator.core.util.LoggerUtil;
 
 import java.util.ArrayList;
 import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 /**
  * @author ksa on 01.12.16.
@@ -46,10 +50,38 @@ public class CallsProcessorImpl implements CallsProcessor {
     @Autowired
     @Qualifier("Statistic")
     private Statistic statistic;
-
+    private final AtomicInteger connectionCallId = new AtomicInteger(100);
+    //improvement of performance and stability
+    private final Set<String> agentsIdWhoHasCall = ConcurrentHashMap.newKeySet();
 
 
     //===============METHODS================================
+    public void processIncomingACDCallList() {
+        int init = connectionCallId.get();
+        pool.getAgentMapping().values().stream()
+                .filter(agentDescriptor -> agentDescriptor.getState() == AgentStates.AGENT_STATE_AVAILABLE)
+                .collect(Collectors.toSet())
+                .forEach(agentDescriptor -> {
+                    if (!agentsIdWhoHasCall.contains(agentDescriptor.getAgentID())) {
+                        agentsIdWhoHasCall.add(agentDescriptor.getAgentID());
+                        processIncomingACDCall(connectionCallId.getAndIncrement(), agentDescriptor);
+                    }
+                });
+        init = (connectionCallId.get() - init);
+        if (init > 0)
+            logger.logAnyway(module, "processIncomingACDCallList: start processing incoming ACD calls number=" + init);
+        else {
+            if (logger.getDebugLevel() > 1)
+                logger.logMore_1(module, "processIncomingACDCallList: start processing incoming ACD calls number=" + init);
+        }
+    }
+
+    /**
+     * low performance
+     *
+     * @param connectionCallIdQueue
+     */
+    @Deprecated
     public void processIncomingACDCallList(Queue<Integer> connectionCallIdQueue) {
         int generatedCallsCount = 0;
         Integer connectionCallId;
@@ -67,8 +99,6 @@ public class CallsProcessorImpl implements CallsProcessor {
     @Async(value = "threadPoolSender")
     public void processIncomingACDCall(int connectionCallId, AgentDescriptor ad) {
         try {
-//            if (ad.getState() != AgentStates.AGENT_STATE_AVAILABLE)
-//                continue;
             ad.setState(AgentStates.AGENT_STATE_RESERVED);
             pool.getCallsHolder().put(connectionCallId, new CallDescriptor(connectionCallId, ad, CallState.NONE_CALL, System.currentTimeMillis()));
             //установка клиентского сотояния
@@ -303,6 +333,7 @@ public class CallsProcessorImpl implements CallsProcessor {
     private void removeCalls(int connectionCallId) {
         CallDescriptor cd = pool.getCallsHolder().remove(connectionCallId);
         if (cd != null) {
+            agentsIdWhoHasCall.remove(cd.getAgentDescriptor().getAgentID());
             if (logger.getDebugLevel() > 1)
                 logger.logMore_1(module, "removeCalls: removed call=" + connectionCallId
                         + " state=" + cd.getCallState() + " agent=" + cd.getAgentDescriptor().getAgentID());

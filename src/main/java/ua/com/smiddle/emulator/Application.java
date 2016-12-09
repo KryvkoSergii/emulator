@@ -34,7 +34,6 @@ import java.util.concurrent.Executor;
 public class Application extends WebMvcConfigurerAdapter {
 
     public static void main(String[] args) {
-//        ApplicationContext ctx =
         SpringApplication.run(Application.class, args);
     }
 
@@ -42,8 +41,8 @@ public class Application extends WebMvcConfigurerAdapter {
     public Executor threadPoolTaskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(4);
-        executor.setMaxPoolSize(4);
-        executor.setQueueCapacity(2000);
+        executor.setMaxPoolSize(10);
+        executor.setQueueCapacity(7000);
         executor.setThreadNamePrefix("EventSenderThread-");
         executor.initialize();
         return executor;

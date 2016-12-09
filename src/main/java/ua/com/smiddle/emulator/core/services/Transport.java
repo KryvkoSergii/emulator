@@ -36,18 +36,9 @@ public class Transport extends Thread {
 
     //Constructors
     public Transport() {
-//        input = new ConcurrentLinkedQueue<>();
-//        output = new ConcurrentLinkedQueue<>();
         input = new LinkedBlockingQueue<>();
         output = new LinkedBlockingQueue<>();
     }
-
-//    public Transport(Socket socket) {
-//        input = new ConcurrentLinkedQueue<>();
-//        output = new ConcurrentLinkedQueue<>();
-//        this.socket = socket;
-//        start();
-//    }
 
 
     //Getters and setters
@@ -107,7 +98,6 @@ public class Transport extends Thread {
             while (!isInterrupted() && errorCount <= 5) {
                 try {
                     read(is, length);
-//                    write(os);
                 } catch (IOException e) {
                     logger.logAnyway(module, "port:" + port + ":" + "run: read messages for=" + socket.getRemoteSocketAddress() + " throw Exception=" + e.getMessage());
                     errorCount++;
@@ -121,11 +111,8 @@ public class Transport extends Thread {
     }
 
     private void read(InputStream is, byte[] length) throws IOException {
-//        if (is.available() > 0) {
         for (byte i = 0; i < length.length; i++)
             length[i] = (byte) is.read();
-//        is.read(length);
-
         int l = ByteBuffer.wrap(length).getInt();
         if (l > 5000) {
             logger.logAnyway(module, "Buffer size = " + l);
@@ -160,7 +147,6 @@ public class Transport extends Thread {
         lastIncommingMessage = System.currentTimeMillis();
         if (logger.getDebugLevel() > 2)
             logger.logMore_2(module, "port:" + port + ":" + "RECEIVED:" + Arrays.toString(messagePart));
-//        }
     }
 
     private void write(OutputStream os) throws IOException, InterruptedException {
