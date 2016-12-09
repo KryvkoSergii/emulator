@@ -83,6 +83,7 @@
                 <td>sum</td>
                 <td>Call statistic</td>
                 <td>sum</td>
+                <td>Statistic ID</td>
             </tr>
             </thead>
             <tbody>
@@ -95,6 +96,7 @@
                     <td>${statistic[2]}</td>
                     <td>${statistic[3]}</td>
                     <td>${statistic[4]}</td>
+                    <td>${statistic[5]}</td>
                 </tr>
             </jstl:forEach>
             </tbody>

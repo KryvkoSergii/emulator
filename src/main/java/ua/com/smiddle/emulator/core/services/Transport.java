@@ -109,7 +109,7 @@ public class Transport extends Thread {
                     read(is, length);
 //                    write(os);
                 } catch (IOException e) {
-                    logger.logAnyway(module, "port:" + port + ":" + "run: write/read messages for=" + socket.getRemoteSocketAddress() + " throw Exception=" + e.getMessage());
+                    logger.logAnyway(module, "port:" + port + ":" + "run: read messages for=" + socket.getRemoteSocketAddress() + " throw Exception=" + e.getMessage());
                     errorCount++;
                 }
             }
@@ -122,9 +122,34 @@ public class Transport extends Thread {
 
     private void read(InputStream is, byte[] length) throws IOException {
 //        if (is.available() > 0) {
-        is.read(length);
-        byte[] messagePart = new byte[ByteBuffer.wrap(length).getInt() + 8];
-        is.read(messagePart, 4, messagePart.length - 4);
+        for (byte i = 0; i < length.length; i++)
+            length[i] = (byte) is.read();
+//        is.read(length);
+
+        int l = ByteBuffer.wrap(length).getInt();
+        if (l > 5000) {
+            logger.logAnyway(module, "Buffer size = " + l);
+            destroyBean();
+            return;
+        }
+        byte[] messagePart = new byte[l + 8];
+
+        if (true) {
+            int read;
+            int offset = 4;
+            int len = messagePart.length - 4;
+            for (read = 0; read < (l + 4 - 1); ) {
+                offset = read + offset;
+                len = len - read;
+                read = is.read(messagePart, offset, len);
+            }
+            if (read != l + 4)
+                logger.logAnyway(module, "length read=" + read + " should=" + (l + 4));
+        } else {
+            for (int i = 4; i < messagePart.length; i++)
+                messagePart[i] = (byte) is.read();
+        }
+
         for (byte i = 0; i < length.length; i++)
             messagePart[i] = length[i];
 //            ByteBuffer buffer = ByteBuffer.allocate(length.length + messagePart.length);
@@ -152,18 +177,13 @@ public class Transport extends Thread {
     public void destroyBean() {
         logger.logAnyway(module, "port:" + port + ":" + "Shutting down...");
         interrupt();
-        while (!output.isEmpty() && errorCount <= 5) {
-            try {
-                write(socket.getOutputStream());
-            } catch (Exception e) {
-                logger.logAnyway(module, "port:" + port + ":" + "destroyBean: writing messages to socket throw Exception=" + e.getMessage());
-            }
-        }
         sender.interrupt();
         try {
-            if (!socket.isClosed()) {
-                socket.getInputStream().close();
-                socket.getOutputStream().close();
+            if (socket != null && !socket.isClosed()) {
+                if (socket.getInputStream() != null)
+                    socket.getInputStream().close();
+                if (socket.getOutputStream() != null)
+                    socket.getOutputStream().close();
                 socket.close();
             }
         } catch (IOException e) {
@@ -183,10 +203,21 @@ public class Transport extends Thread {
         public void run() {
             while (!isInterrupted() && errorCount <= 5) {
                 try {
+                    if (outputStream == null) break;
                     write(outputStream);
                 } catch (Exception e) {
                     errorCount++;
                     logger.logAnyway(module, "port:" + port + ":" + "Sender.run: throw Exception=" + e.getMessage());
+                }
+            }
+
+            while (!output.isEmpty() && errorCount <= 5) {
+                try {
+                    if (outputStream == null) break;
+                    write(socket.getOutputStream());
+                } catch (Exception e) {
+                    errorCount++;
+                    logger.logAnyway(module, "port:" + port + ":" + "Sender.run: writing messages to socket throw Exception=" + e.getMessage());
                 }
             }
         }

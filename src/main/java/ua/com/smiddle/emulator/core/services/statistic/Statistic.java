@@ -12,6 +12,7 @@ import ua.com.smiddle.emulator.core.util.LoggerUtil;
 
 import javax.annotation.PostConstruct;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -68,11 +69,18 @@ public class Statistic {
     public void logAgentStatistic(AgentDescriptor agentDescriptor) {
         AgentStatistic agentStatistic = getAgentStatistic().get(agentDescriptor.getAgentStatisticId());
         long id;
+        String instrument;
         if (agentStatistic == null) {
             //проверка в пуле по агентскому инструменту, и поиск statisticId
-            if (agentDescriptor.getAgentInstrument() != null) {
-                AgentDescriptor tmp = pools.getInstrumentMapping().get(agentDescriptor.getAgentInstrument());
-                agentStatistic = getAgentStatistic().get(tmp != null ? tmp.getAgentStatisticId() : 0);
+            agentStatistic = findByAgentInstrument(agentDescriptor.getAgentInstrument(), agentStatistic);
+
+            //проверка по мониторинг Id
+            if (agentStatistic == null && agentDescriptor.getMonitorID() != 0) {
+                try {
+                    instrument = findMonitorIDinPool(agentDescriptor.getMonitorID());
+                    agentStatistic = findByAgentInstrument(instrument, agentStatistic);
+                } catch (Exception e) {
+                }
             }
 
             //если statisticId нет ни в AgentStatistic, ни в agentInstrument - создается новая
@@ -86,6 +94,14 @@ public class Statistic {
         agentStatistic.getAgentStates().add(new Object[]{System.currentTimeMillis(), agentDescriptor.getState()});
     }
 
+    private AgentStatistic findByAgentInstrument(String instrument, AgentStatistic agentStatistic) {
+        if (instrument != null) {
+            AgentDescriptor tmp = pools.getInstrumentMapping().get(instrument);
+            agentStatistic = getAgentStatistic().get(tmp != null ? tmp.getAgentStatisticId() : 0);
+        }
+        return agentStatistic;
+    }
+
     public void logCallStatistic(CallDescriptor callDescriptor) {
         long id = callDescriptor.getAgentDescriptor().getAgentStatisticId();
         AgentStatistic as = getAgentStatistic().get(id);
@@ -95,7 +111,7 @@ public class Statistic {
     public void clearAgentStatistic(String marker) {
         agentStatistic.clear();
         lastCleared = System.currentTimeMillis();
-        if (logger.getDebugLevel()>0)
+        if (logger.getDebugLevel() > 0)
             logger.logMore_0(module, marker + ": cleared Agent Statistic");
     }
 
@@ -112,5 +128,13 @@ public class Statistic {
         if (System.currentTimeMillis() - lastCleared > 5 * 60 * 1000) {
             clearAgentStatistic("clearAgentStatisticScheduled");
         }
+    }
+
+    private String findMonitorIDinPool(Integer monitorId) throws Exception {
+        Optional<String> instrument = pools.getMonitorsHolder().entrySet().stream()
+                .filter(map -> monitorId.equals(map.getValue()))
+                .map(Map.Entry::getKey)
+                .findAny();
+        return instrument.get();
     }
 }

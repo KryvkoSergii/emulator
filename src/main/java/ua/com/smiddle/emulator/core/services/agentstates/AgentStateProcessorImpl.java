@@ -73,14 +73,14 @@ public class AgentStateProcessorImpl implements AgentStateProcessor {
                 processAgentStateEvent(agentDescriptor);
                 break;
             }
-            case AGENT_STATE_NOT_READY: {
-                AgentStateEvent ase = buildAgentStateEvent(agentDescriptor);
-                sendMessageToAllSubscribers(ase.serializeMessage());
-                statistic.logAgentStatistic(agentDescriptor);
-                if (logger.getDebugLevel() > 1)
-                    logger.logMore_1(module, directionOut + ase);
-                break;
-            }
+//            case AGENT_STATE_NOT_READY: {
+//                AgentStateEvent ase = buildAgentStateEvent(agentDescriptor);
+//                sendMessageToAllSubscribers(ase.serializeMessage());
+//                statistic.logAgentStatistic(agentDescriptor);
+//                if (logger.getDebugLevel() > 1)
+//                    logger.logMore_1(module, directionOut + ase);
+//                break;
+//            }
             case AGENT_STATE_LOGOUT: {
                 AgentStateEvent ase = buildAgentStateEvent(agentDescriptor);
                 sendMessageToAllSubscribers(ase.serializeMessage());
@@ -113,7 +113,7 @@ public class AgentStateProcessorImpl implements AgentStateProcessor {
     @Override
     public void processSetAgentStateReq(Object message) throws Exception {
 //        Transport transport = sd.getTransport();
-        AgentDescriptor tmpAgent = new AgentDescriptor();
+        final AgentDescriptor tmpAgent = new AgentDescriptor();
         SetAgentStateReq setAgentStateReq = (SetAgentStateReq) message;
         for (FloatingField ff : setAgentStateReq.getFloatingFields()) {
             if (ff.getTag() == Fields.TAG_AGENT_INSTRUMENT.getTagId())
@@ -181,8 +181,8 @@ public class AgentStateProcessorImpl implements AgentStateProcessor {
         if (monitorID != null)
             tmpAgent.setMonitorID(monitorID);
         if (tmpAgent.getAgentInstrument() != null) {
-            if (pool.getInstrumentMapping().containsKey(tmpAgent.getAgentInstrument())) {
-                AgentDescriptor a = pool.getInstrumentMapping().get(tmpAgent.getAgentInstrument());
+            AgentDescriptor a;
+            if ((a = pool.getInstrumentMapping().get(tmpAgent.getAgentInstrument())) != null) {
                 a.setAgentInstrument(tmpAgent.getAgentInstrument());
                 if (tmpAgent.getAgentID() != null)
                     a.setAgentID(tmpAgent.getAgentID());

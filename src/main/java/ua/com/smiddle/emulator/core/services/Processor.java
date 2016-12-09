@@ -99,6 +99,7 @@ public class Processor extends Thread {
             byte[] inputMessage = transport.getInput().take();
             ByteBuffer buffer = ByteBuffer.wrap(inputMessage, 4, 8);
             int code = buffer.getInt();
+//            logger.logAnyway(module, "message type=" + code);
             switch (code) {
                 case CTI.MSG_HEARTBEAT_REQ: {
                     HeartbeatReq heartbeatReq = HeartbeatReq.deserializeMessage(inputMessage);
@@ -275,7 +276,7 @@ public class Processor extends Thread {
         }
     }
 
-    private String findMonitorIDinPool(Integer monitorId) throws Exception {
+    public String findMonitorIDinPool(Integer monitorId) throws Exception {
         Optional<String> instrument = pool.getMonitorsHolder().entrySet().stream()
                 .filter(map -> monitorId.equals(map.getValue()))
                 .map(Map.Entry::getKey)
@@ -293,6 +294,7 @@ public class Processor extends Thread {
         queryAgentStateConf.setAgentMode(UnknownFields.AgentMode);
         queryAgentStateConf.setMaxTaskLimit(UnknownFields.MaxTaskLimit);
         queryAgentStateConf.setAgentIdICMA(queryAgentStateReq.getAgentIdICMA());
+        queryAgentStateConf.setFloatingFields(new ArrayList<>());
         if (queryAgentStateReq.getFloatingFields() != null) {
             for (FloatingField ff : queryAgentStateReq.getFloatingFields()) {
                 if (ff.getTag() == Fields.TAG_AGENT_INSTRUMENT.getTagId()) {
@@ -300,7 +302,6 @@ public class Processor extends Thread {
                     if (pool.getInstrumentMapping().containsKey(ff.getData())) {
                         AgentDescriptor agentDescriptor = pool.getInstrumentMapping().get(ff.getData());
                         state = agentDescriptor.getState();
-                        queryAgentStateConf.setFloatingFields(new ArrayList<>());
                         queryAgentStateConf.getFloatingFields().add(new FloatingField(Fields.TAG_AGENT_ID.getTagId(), agentDescriptor.getAgentID()));
                     }
                     queryAgentStateConf.setAgentState(state);

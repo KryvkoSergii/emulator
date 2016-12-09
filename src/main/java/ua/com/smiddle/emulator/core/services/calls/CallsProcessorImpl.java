@@ -48,6 +48,7 @@ public class CallsProcessorImpl implements CallsProcessor {
     private Statistic statistic;
 
 
+
     //===============METHODS================================
     public void processIncomingACDCallList(Queue<Integer> connectionCallIdQueue) {
         int generatedCallsCount = 0;

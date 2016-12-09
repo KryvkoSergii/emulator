@@ -45,12 +45,13 @@ public class WebController {
         List<String[]> l = new ArrayList<>();
         String[] row;
         for (AgentStatistic as : collection) {
-            row = new String[5];
+            row = new String[6];
             row[0] = as.getAgentId();
             row[1] = as.getAgentStates().stream().map(objects -> String.valueOf(objects[1]).concat(", ")).reduce(" ", String::concat);
             row[2] = String.valueOf(as.getAgentStates().stream().count());
             row[3] = as.getCallsStatistic().stream().map(objects -> String.valueOf(objects[1]).concat(", ")).reduce(" ", String::concat);
             row[4] = String.valueOf(as.getCallsStatistic().stream().count());
+            row[5] = String.valueOf(as.getStatisticId());
             l.add(row);
         }
         return l;

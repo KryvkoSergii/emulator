@@ -34,7 +34,7 @@ public class RemoteAccessController {
 
 //    @CrossOrigin
     @RequestMapping(value = "/agents", method = RequestMethod.GET,
-            consumes = "application/json; charset=UTF-8", produces = "application/json; charset=UTF-8")
+            produces = "application/json; charset=UTF-8")
     public Object getAgents(HttpServletResponse response) {
         if (logger.getDebugLevel()>1)
             logger.logMore_1(module, "getAgents: got request");
