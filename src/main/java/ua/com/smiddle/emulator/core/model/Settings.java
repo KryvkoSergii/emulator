@@ -53,6 +53,7 @@ public class Settings implements Serializable {
     }
 
     //Methods
+    @SuppressWarnings("StringBufferReplaceableByString")
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("Settings{");

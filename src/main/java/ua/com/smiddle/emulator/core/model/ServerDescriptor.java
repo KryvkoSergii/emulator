@@ -2,7 +2,7 @@ package ua.com.smiddle.emulator.core.model;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import ua.com.smiddle.emulator.core.services.Transport;
+import ua.com.smiddle.emulator.core.services.prototype.bean.Transport;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;

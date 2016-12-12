@@ -1,4 +1,4 @@
-package ua.com.smiddle.emulator.core.services;
+package ua.com.smiddle.emulator.core.services.prototype.bean;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -137,8 +137,7 @@ public class Transport extends Thread {
                 messagePart[i] = (byte) is.read();
         }
 
-        for (byte i = 0; i < length.length; i++)
-            messagePart[i] = length[i];
+        System.arraycopy(length, 0, messagePart, 0, length.length);
 //            ByteBuffer buffer = ByteBuffer.allocate(length.length + messagePart.length);
 //            buffer.put(length).put(messagePart);
 //            byte[] message = buffer.array();

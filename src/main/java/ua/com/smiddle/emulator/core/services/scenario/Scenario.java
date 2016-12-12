@@ -6,8 +6,8 @@ import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import ua.com.smiddle.emulator.core.model.UnknownFields;
-import ua.com.smiddle.emulator.core.services.Pools;
-import ua.com.smiddle.emulator.core.services.calls.CallsProcessor;
+import ua.com.smiddle.emulator.core.pool.Pools;
+import ua.com.smiddle.emulator.core.services.processing.calls.CallsProcessor;
 import ua.com.smiddle.emulator.core.util.LoggerUtil;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -29,9 +29,6 @@ public class Scenario {
     @Autowired
     @Qualifier("LoggerUtil")
     private LoggerUtil logger;
-//    private AtomicInteger connectionCallId = new AtomicInteger(100);
-    //    private boolean startCalling = true;
-//    private Queue incommingCallsQueue = new LinkedBlockingQueue<>();
     @Autowired
     private Environment env;
 
@@ -41,21 +38,6 @@ public class Scenario {
             if (logger.getDebugLevel() > 0)
                 logger.logAnyway(module, "start generating ACD calls from=" + UnknownFields.ANI + " to=" + UnknownFields.IVR);
             callsProcessor.processIncomingACDCallList();
-//            final AtomicInteger callCountStart = new AtomicInteger(0);
-//            pools.getAgentMapping().values().stream()
-//                    .filter(agentDescriptor -> agentDescriptor.getState() == AgentStates.AGENT_STATE_AVAILABLE)
-//                    .collect(Collectors.toList())
-//                    .forEach(agentDescriptor1 -> {
-//                        incommingCallsQueue.add(connectionCallId.getAndIncrement());
-//                        callCountStart.getAndIncrement();
-//                    });
-//            callsProcessor.processIncomingACDCallList(incommingCallsQueue);
-//            if (callCountStart.get() > 0)
-//                logger.logAnyway(module, "generated calls start number=" + callCountStart.get());
-//            else {
-//                if (logger.getDebugLevel() > 1)
-//                    logger.logMore_0(module, "generated calls start number=" + callCountStart.get());
-//            }
         } else {
             if (logger.getDebugLevel() > 1)
                 logger.logMore_1(module, "generating calls=" + Boolean.valueOf(env.getProperty("connector.ganerate.call")));
@@ -80,11 +62,6 @@ public class Scenario {
                 if (logger.getDebugLevel() > 1)
                     logger.logMore_0(module, "initiated dropped ACD calls number=" + callCountDrop.get());
             }
-//        for (int connectionCallId : pools.getCallsHolder().keySet()) {
-//            callsProcessor.processACDCallsEndByCustomer(connectionCallId);
-//            callCountDrop++;
-//        }
-//        if (callCountDrop > 0) startCalling = true;
         }
     }
 

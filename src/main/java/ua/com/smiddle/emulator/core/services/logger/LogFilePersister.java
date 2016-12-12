@@ -1,4 +1,4 @@
-package ua.com.smiddle.emulator.core.services.impl;
+package ua.com.smiddle.emulator.core.services.logger;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;

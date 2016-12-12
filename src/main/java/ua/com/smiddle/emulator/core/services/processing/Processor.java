@@ -1,4 +1,4 @@
-package ua.com.smiddle.emulator.core.services;
+package ua.com.smiddle.emulator.core.services.processing;
 
 import java.util.concurrent.atomic.AtomicInteger;
 

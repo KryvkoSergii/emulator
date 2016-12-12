@@ -1,4 +1,4 @@
-package ua.com.smiddle.emulator.core.services;
+package ua.com.smiddle.emulator.core.services.processing;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -19,8 +19,10 @@ import ua.com.smiddle.cti.messages.model.messages.session_management.*;
 import ua.com.smiddle.emulator.AgentDescriptor;
 import ua.com.smiddle.emulator.core.model.ServerDescriptor;
 import ua.com.smiddle.emulator.core.model.UnknownFields;
-import ua.com.smiddle.emulator.core.services.agentstates.AgentStateProcessor;
-import ua.com.smiddle.emulator.core.services.calls.CallsProcessor;
+import ua.com.smiddle.emulator.core.pool.Pools;
+import ua.com.smiddle.emulator.core.services.processing.agentstates.AgentStateProcessor;
+import ua.com.smiddle.emulator.core.services.processing.calls.CallsProcessor;
+import ua.com.smiddle.emulator.core.services.prototype.bean.Transport;
 import ua.com.smiddle.emulator.core.util.LoggerUtil;
 
 import javax.annotation.PostConstruct;
@@ -284,7 +286,7 @@ public class ProcessorImpl extends Thread implements Processor {
         }
     }
 
-    public String findMonitorIDinPool(Integer monitorId) throws Exception {
+    public String findMonitorIDinPool(Integer monitorId) {
         Optional<String> instrument = pool.getMonitorsHolder().entrySet().stream()
                 .filter(map -> monitorId.equals(map.getValue()))
                 .map(Map.Entry::getKey)

@@ -15,7 +15,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
 import org.springframework.web.servlet.view.JstlView;
 import ua.com.smiddle.emulator.core.model.ServerDescriptor;
-import ua.com.smiddle.emulator.core.services.Transport;
+import ua.com.smiddle.emulator.core.services.prototype.bean.Transport;
 
 import java.util.concurrent.Executor;
 

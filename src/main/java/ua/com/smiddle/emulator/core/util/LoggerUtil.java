@@ -36,11 +36,13 @@ public class LoggerUtil {
     public LoggerUtil() {
     }
 
+
     //Methods
     public static void logAnywayStdOut(String componentName, String message) {
         System.out.println(new StringBuilder().append(LocalDateTime.now().format(formatter)).append(" MODULE: ").append("CTI-EMULATOR")
                 .append(" COMPONENT: ").append(componentName).append(" MESSAGE: ").append(message).toString());
     }
+
 
     //Getters & setters
     public int getDebugLevel() {
@@ -84,9 +86,8 @@ public class LoggerUtil {
     /**
      * Обновление настроек (каждую 1 мин)
      */
-    @Scheduled(initialDelay = 1 * 60 * 1000, fixedDelay = 1 * 60 * 1000)
+    @Scheduled(initialDelay = 60 * 1000, fixedDelay = 60 * 1000)
     private void updateSettings() {
-//        if (settingsUtil.getSettings().getDebugLevel() != debugLevel)
         debugLevel = settingsUtil.getSettings().getDebugLevel();
     }
 

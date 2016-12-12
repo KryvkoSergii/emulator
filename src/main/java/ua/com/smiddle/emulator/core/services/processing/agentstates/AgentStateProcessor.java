@@ -1,4 +1,4 @@
-package ua.com.smiddle.emulator.core.services.agentstates;
+package ua.com.smiddle.emulator.core.services.processing.agentstates;
 
 import ua.com.smiddle.emulator.AgentDescriptor;
 

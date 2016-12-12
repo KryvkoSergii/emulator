@@ -1,4 +1,4 @@
-package ua.com.smiddle.emulator.core.services.impl;
+package ua.com.smiddle.emulator.core.services.logger;
 
 import ua.com.smiddle.emulator.core.model.Log;
 

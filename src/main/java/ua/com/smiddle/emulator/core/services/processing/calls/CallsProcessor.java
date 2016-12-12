@@ -1,4 +1,4 @@
-package ua.com.smiddle.emulator.core.services.calls;
+package ua.com.smiddle.emulator.core.services.processing.calls;
 
 import ua.com.smiddle.cti.messages.model.messages.calls.AnswerCallReq;
 import ua.com.smiddle.cti.messages.model.messages.calls.ClearCallReq;

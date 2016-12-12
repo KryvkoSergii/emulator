@@ -1,4 +1,4 @@
-package ua.com.smiddle.emulator.core.services.agentstates;
+package ua.com.smiddle.emulator.core.services.processing.agentstates;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -14,7 +14,7 @@ import ua.com.smiddle.cti.messages.model.messages.common.FloatingField;
 import ua.com.smiddle.cti.messages.model.messages.common.PeripheralTypes;
 import ua.com.smiddle.emulator.AgentDescriptor;
 import ua.com.smiddle.emulator.core.model.UnknownFields;
-import ua.com.smiddle.emulator.core.services.Pools;
+import ua.com.smiddle.emulator.core.pool.Pools;
 import ua.com.smiddle.emulator.core.services.statistic.Statistic;
 import ua.com.smiddle.emulator.core.util.LoggerUtil;
 

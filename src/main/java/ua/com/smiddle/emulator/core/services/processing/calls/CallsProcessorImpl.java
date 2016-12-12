@@ -1,4 +1,4 @@
-package ua.com.smiddle.emulator.core.services.calls;
+package ua.com.smiddle.emulator.core.services.processing.calls;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -16,8 +16,8 @@ import ua.com.smiddle.emulator.AgentDescriptor;
 import ua.com.smiddle.emulator.core.model.CallDescriptor;
 import ua.com.smiddle.emulator.core.model.CallState;
 import ua.com.smiddle.emulator.core.model.UnknownFields;
-import ua.com.smiddle.emulator.core.services.Pools;
-import ua.com.smiddle.emulator.core.services.agentstates.AgentStateProcessor;
+import ua.com.smiddle.emulator.core.pool.Pools;
+import ua.com.smiddle.emulator.core.services.processing.agentstates.AgentStateProcessor;
 import ua.com.smiddle.emulator.core.services.statistic.Statistic;
 import ua.com.smiddle.emulator.core.util.LoggerUtil;
 

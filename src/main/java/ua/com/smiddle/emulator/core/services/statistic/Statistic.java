@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import ua.com.smiddle.emulator.AgentDescriptor;
 import ua.com.smiddle.emulator.core.model.AgentStatistic;
 import ua.com.smiddle.emulator.core.model.CallDescriptor;
-import ua.com.smiddle.emulator.core.services.Pools;
+import ua.com.smiddle.emulator.core.pool.Pools;
 import ua.com.smiddle.emulator.core.util.LoggerUtil;
 
 import javax.annotation.PostConstruct;
@@ -36,13 +36,6 @@ public class Statistic {
 
 
     //Getters and setters
-//    public List<CallDescriptor> getCallDescriptors() {
-//        return callDescriptors;
-//    }
-//
-//    public void setCallDescriptors(List<CallDescriptor> callDescriptors) {
-//        this.callDescriptors = callDescriptors;
-//    }
 
     public Map<Long, AgentStatistic> getAgentStatistic() {
         return agentStatistic;
@@ -130,7 +123,7 @@ public class Statistic {
         }
     }
 
-    private String findMonitorIDinPool(Integer monitorId) throws Exception {
+    private String findMonitorIDinPool(Integer monitorId) {
         Optional<String> instrument = pools.getMonitorsHolder().entrySet().stream()
                 .filter(map -> monitorId.equals(map.getValue()))
                 .map(Map.Entry::getKey)
