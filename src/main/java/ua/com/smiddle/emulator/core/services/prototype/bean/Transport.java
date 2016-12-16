@@ -104,10 +104,10 @@ public class Transport extends Thread {
                 }
             }
             isDone = true;
-            destroyBean();
         } catch (IOException e) {
             logger.logAnyway(module, e.getMessage());
         }
+        destroyBean();
     }
 
     private void read(InputStream is, byte[] length) throws IOException {

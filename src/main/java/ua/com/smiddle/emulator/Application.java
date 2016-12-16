@@ -41,8 +41,8 @@ public class Application extends WebMvcConfigurerAdapter {
     public Executor threadPoolTaskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(4);
-        executor.setMaxPoolSize(10);
-        executor.setQueueCapacity(7000);
+        executor.setMaxPoolSize(50);
+        executor.setQueueCapacity(700);
         executor.setThreadNamePrefix("EventSenderThread-");
         executor.initialize();
         return executor;

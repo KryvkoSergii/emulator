@@ -29,7 +29,6 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.nio.ByteBuffer;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -71,25 +70,20 @@ public class ProcessorImpl extends Thread implements Processor {
     @Override
     public void run() {
         logger.logAnyway(module, "started...");
-        AtomicBoolean needSleep = new AtomicBoolean();
+//        AtomicBoolean needSleep = new AtomicBoolean();
         while (!isInterrupted()) {
             if (pool.getSubscribers().isEmpty())
                 try {
                     currentThread().sleep(100);
                 } catch (InterruptedException e) {
                 }
-            needSleep.set(false);
+
             pool.getSubscribers().stream().forEach(serverDescriptor -> {
-                if (serverDescriptor.getTransport().getOutput().isEmpty())
-                    needSleep.set(true);
-                processIncomingMessages(serverDescriptor);
+                checkAndRemoveServerDescriptor(serverDescriptor);
+                if (!serverDescriptor.getTransport().getInput().isEmpty())
+                    processIncomingMessages(serverDescriptor);
             });
-            if (needSleep.get()) {
-                try {
-                    currentThread().sleep(1);
-                } catch (InterruptedException e) {
-                }
-            }
+
         }
     }
 
@@ -346,11 +340,20 @@ public class ProcessorImpl extends Thread implements Processor {
         for (Iterator iterator = pool.getSubscribers().iterator(); iterator.hasNext(); ) {
             ServerDescriptor sd = (ServerDescriptor) iterator.next();
             if (sd.getTransport().isDone() || !checkTimeOut(sd)) {
-                sd.getTransport().interrupt();
-                logger.logAnyway(module, "Removing ServerDescriptor " + sd.getClientID());
-                pool.getSubscribers().remove(sd);
+                removeServerDescriptor(sd, "clearSubscribers");
             }
         }
+    }
+
+    private void removeServerDescriptor(ServerDescriptor sd, String method) {
+        sd.getTransport().interrupt();
+        logger.logAnyway(module, method + ":Removing ServerDescriptor " + sd.getClientID());
+        pool.getSubscribers().remove(sd);
+    }
+
+    private void checkAndRemoveServerDescriptor(ServerDescriptor descriptor) {
+        if (descriptor.getTransport() == null || descriptor.getTransport().getSocket() == null || descriptor.getTransport().getSocket().isClosed())
+            removeServerDescriptor(descriptor, "checkAndRemoveServerDescriptor");
     }
 }
 

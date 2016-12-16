@@ -15,6 +15,7 @@ import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 
 /**
  * @author srg on 09.11.16.
@@ -62,7 +63,8 @@ public class ServerListener extends Thread {
         }
     }
 
-    private void acceptingConnection(Socket s) {
+    private void acceptingConnection(Socket s) throws SocketException {
+        s.setTcpNoDelay(true);
         ServerDescriptor pr = context.getBean(ServerDescriptor.class);
         pr.buildTransport(s);
         pool.getSubscribers().add(pr);
