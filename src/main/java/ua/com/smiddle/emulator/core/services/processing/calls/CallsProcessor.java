@@ -19,8 +19,11 @@ public interface CallsProcessor {
 
     void processACDCallsEndByCustomer(int connectionCallId);
 
+    void generateCallForAgent(AgentDescriptor ad);
+
     @Deprecated
     void processIncomingACDCallList(Queue<Integer> connectionCallIdQueue);
 
+    @Deprecated
     void processIncomingACDCallList();
 }

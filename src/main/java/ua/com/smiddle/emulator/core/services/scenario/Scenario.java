@@ -5,11 +5,14 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import ua.com.smiddle.emulator.AgentDescriptor;
 import ua.com.smiddle.emulator.core.model.UnknownFields;
 import ua.com.smiddle.emulator.core.pool.Pools;
 import ua.com.smiddle.emulator.core.services.processing.calls.CallsProcessor;
 import ua.com.smiddle.emulator.core.util.LoggerUtil;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -17,8 +20,8 @@ import java.util.stream.Collectors;
  * @author ksa on 01.12.16.
  * @project emulator
  */
-@Component("Scenario")
-public class Scenario {
+@Component
+public class Scenario extends Thread {
     private final String module = "Scenario";
     @Autowired
     @Qualifier("CallsProcessorImpl")
@@ -31,10 +34,48 @@ public class Scenario {
     private LoggerUtil logger;
     @Autowired
     private Environment env;
+    private boolean enabledScheduledCall;
+    private boolean enabledAgentEventCall;
+
+    @PostConstruct
+    private void init() {
+        updateSettings();
+        logger.logAnyway(module, "initiated with "
+                .concat("connector.generate.scheduled.call=").concat(String.valueOf(enabledScheduledCall))
+                .concat(", ")
+                .concat("connector.generate.agentevent.call=").concat(String.valueOf(enabledAgentEventCall)));
+        start();
+    }
+
+    private void updateSettings() {
+        enabledScheduledCall = Boolean.valueOf(env.getProperty("connector.generate.scheduled.call"));
+        enabledAgentEventCall = Boolean.valueOf(env.getProperty("connector.generate.agentevent.call"));
+    }
+
+    @Override
+    public void run() {
+        while (!isInterrupted()) {
+            try {
+                makeCallByAgentEvent(pools.getAgentQueueToCall().take());
+            } catch (InterruptedException e) {
+                if (logger.getDebugLevel() > 0)
+                    logger.logMore_0(module, "run: throws Exception=" + e.getMessage());
+            }
+        }
+
+    }
+
+    public void makeCallByAgentEvent(AgentDescriptor agentDescriptor) {
+        if (enabledAgentEventCall) {
+            callsProcessor.generateCallForAgent(agentDescriptor);
+            if (logger.getDebugLevel() > 1)
+                logger.logMore_1(module, "generate calls for=" + agentDescriptor.getAgentID());
+        }
+    }
 
     @Scheduled(initialDelay = 25 * 1000, fixedRate = 10 * 1000)
     private void generateCalls() {
-        if (Boolean.valueOf(env.getProperty("connector.ganerate.call"))) {
+        if (enabledScheduledCall) {
             if (logger.getDebugLevel() > 0)
                 logger.logAnyway(module, "start generating ACD calls from=" + UnknownFields.ANI + " to=" + UnknownFields.IVR);
             callsProcessor.processIncomingACDCallList();
@@ -46,7 +87,7 @@ public class Scenario {
 
     @Scheduled(initialDelay = 40 * 1000, fixedRate = 10 * 1000)
     private void dropCalls() {
-        if (Boolean.valueOf(env.getProperty("connector.ganerate.call"))) {
+        if (enabledScheduledCall) {
             if (logger.getDebugLevel() > 0) logger.logMore_0(module, "start dropping ACD calls...");
             final AtomicInteger callCountDrop = new AtomicInteger(0);
             pools.getCallsHolder().values().stream()
@@ -63,6 +104,11 @@ public class Scenario {
                     logger.logMore_0(module, "initiated dropped ACD calls number=" + callCountDrop.get());
             }
         }
+    }
+
+    @PreDestroy
+    private void destroyBean() {
+        interrupt();
     }
 
 }

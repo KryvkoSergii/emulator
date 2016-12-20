@@ -12,7 +12,9 @@ import ua.com.smiddle.emulator.core.util.LoggerUtil;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -40,6 +42,8 @@ public class Pools {
     private AtomicInteger monitoringID = new AtomicInteger(1);
     //<MonitorID,ServerDescriptor> MONITOR_START_REQ
     private AtomicInteger monitorID = new AtomicInteger(1);
+    //Contains agentDescriptor with Available state
+    private BlockingQueue<AgentDescriptor> agentQueueToCall = new LinkedBlockingQueue<>();
 
 
     //Getters and setters
@@ -107,6 +111,13 @@ public class Pools {
         this.callsHolder = callsHolder;
     }
 
+    public BlockingQueue<AgentDescriptor> getAgentQueueToCall() {
+        return agentQueueToCall;
+    }
+
+    public void setAgentQueueToCall(BlockingQueue<AgentDescriptor> agentQueueToCall) {
+        this.agentQueueToCall = agentQueueToCall;
+    }
 
     //Methods
     @Scheduled(initialDelay = 5 * 1000, fixedDelay = 5 * 1000)

@@ -81,14 +81,15 @@ public class AgentStateProcessorImpl implements AgentStateProcessor {
                 processAgentStateEvent(agentDescriptor);
                 break;
             }
-//            case AGENT_STATE_NOT_READY: {
-//                AgentStateEvent ase = buildAgentStateEvent(agentDescriptor);
-//                sendMessageToAllSubscribers(ase.serializeMessage());
-//                statistic.logAgentStatistic(agentDescriptor);
-//                if (logger.getDebugLevel() > 1)
-//                    logger.logMore_1(module, directionOut + ase);
-//                break;
-//            }
+            case AGENT_STATE_AVAILABLE: {
+                AgentStateEvent ase = buildAgentStateEvent(agentDescriptor);
+                sendMessageToAllSubscribers(ase.serializeMessage());
+                statistic.logAgentStatistic(agentDescriptor);
+                if (logger.getDebugLevel() > 1)
+                    logger.logMore_1(module, directionOut + ase);
+                pool.getAgentQueueToCall().put(agentDescriptor);
+                break;
+            }
             case AGENT_STATE_LOGOUT: {
                 AgentStateEvent ase = buildAgentStateEvent(agentDescriptor);
                 sendMessageToAllSubscribers(ase.serializeMessage());
