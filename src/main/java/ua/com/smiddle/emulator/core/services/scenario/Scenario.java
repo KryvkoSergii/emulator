@@ -54,9 +54,11 @@ public class Scenario extends Thread {
 
     @Override
     public void run() {
+        AgentDescriptor ad;
         while (!isInterrupted()) {
             try {
-                makeCallByAgentEvent(pools.getAgentQueueToCall().take());
+                ad = pools.getAgentQueueToCall().take();
+                makeCallByAgentEvent(ad);
             } catch (InterruptedException e) {
                 if (logger.getDebugLevel() > 0)
                     logger.logMore_0(module, "run: throws Exception=" + e.getMessage());
@@ -67,9 +69,9 @@ public class Scenario extends Thread {
 
     public void makeCallByAgentEvent(AgentDescriptor agentDescriptor) {
         if (enabledAgentEventCall) {
-            callsProcessor.generateCallForAgent(agentDescriptor);
             if (logger.getDebugLevel() > 1)
                 logger.logMore_1(module, "generate calls for=" + agentDescriptor.getAgentID());
+            callsProcessor.generateCallForAgent(agentDescriptor);
         }
     }
 

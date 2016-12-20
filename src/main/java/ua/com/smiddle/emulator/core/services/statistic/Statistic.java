@@ -98,7 +98,12 @@ public class Statistic {
     public void logCallStatistic(CallDescriptor callDescriptor) {
         long id = callDescriptor.getAgentDescriptor().getAgentStatisticId();
         AgentStatistic as = getAgentStatistic().get(id);
-        as.getCallsStatistic().add(new Object[]{System.currentTimeMillis(), callDescriptor.getCallState()});
+        if (as != null)
+            as.getCallsStatistic().add(new Object[]{System.currentTimeMillis(), callDescriptor.getCallState()});
+        else {
+            if (logger.getDebugLevel() > 0)
+                logger.logMore_0(module, "logCallStatistic: can't find callDescriptor for" + callDescriptor);
+        }
     }
 
     public void clearAgentStatistic(String marker) {

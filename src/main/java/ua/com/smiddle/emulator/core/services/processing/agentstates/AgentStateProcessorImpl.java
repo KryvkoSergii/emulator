@@ -3,6 +3,7 @@ package ua.com.smiddle.emulator.core.services.processing.agentstates;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Description;
+import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import ua.com.smiddle.cti.messages.model.messages.agent_events.AgentStateEvent;
@@ -40,7 +41,11 @@ public class AgentStateProcessorImpl implements AgentStateProcessor {
     @Autowired
     @Qualifier("Statistic")
     private Statistic statistic;
+    @Autowired
+    private Environment env;
     private final AtomicInteger messageWroteCounter = new AtomicInteger();
+    private boolean enabledScheduledCall;
+    private boolean enabledAgentEventCall;
 
 
     //Constructors
@@ -58,6 +63,7 @@ public class AgentStateProcessorImpl implements AgentStateProcessor {
     @PostConstruct
     private void init() {
         logger.logAnyway(module, "initialized...");
+        updateSettings();
     }
 
     //===============METHODS================================
@@ -87,7 +93,15 @@ public class AgentStateProcessorImpl implements AgentStateProcessor {
                 statistic.logAgentStatistic(agentDescriptor);
                 if (logger.getDebugLevel() > 1)
                     logger.logMore_1(module, directionOut + ase);
-                pool.getAgentQueueToCall().put(agentDescriptor);
+                if (enabledAgentEventCall) {
+                    agentDescriptor = pool.getInstrumentMapping().get(agentDescriptor.getAgentInstrument() != null ? agentDescriptor.getAgentInstrument() : "");
+                    if (agentDescriptor != null)
+                        pool.getAgentQueueToCall().put(agentDescriptor);
+                    else {
+                        if (logger.getDebugLevel() > 1)
+                            logger.logMore_0(module, "unable identified agent by instrument to generate new call");
+                    }
+                }
                 break;
             }
             case AGENT_STATE_LOGOUT: {
@@ -216,4 +230,8 @@ public class AgentStateProcessorImpl implements AgentStateProcessor {
         }
     }
 
+    private void updateSettings() {
+        enabledScheduledCall = Boolean.valueOf(env.getProperty("connector.generate.scheduled.call"));
+        enabledAgentEventCall = Boolean.valueOf(env.getProperty("connector.generate.agentevent.call"));
+    }
 }

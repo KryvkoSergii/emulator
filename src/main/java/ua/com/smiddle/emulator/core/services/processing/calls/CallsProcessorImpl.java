@@ -57,7 +57,7 @@ public class CallsProcessorImpl implements CallsProcessor {
 
     //===============METHODS================================
     public void generateCallForAgent(AgentDescriptor ad) {
-        int callId = connectionCallId.get();
+        int callId = connectionCallId.getAndIncrement();
         processIncomingACDCall(callId, ad);
         if (logger.getDebugLevel() > 1)
             logger.logMore_1(module, "generateCallForAgent: generate call for AgentID=" + ad.getAgentID() + " callID=" + callId);

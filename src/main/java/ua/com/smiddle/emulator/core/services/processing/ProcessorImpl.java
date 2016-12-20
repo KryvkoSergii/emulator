@@ -183,6 +183,9 @@ public class ProcessorImpl extends Thread implements Processor {
                     callsProcessor.processAnswerCallReq(answerCallReq);
                     break;
                 }
+                case CTI.MSG_RELEASE_CALL_REQ: {
+// add realise call
+                }
                 case CTI.MSG_CLEAR_CALL_REQ: {
                     ClearCallReq clearCallReq = ClearCallReq.deserializeMessage(inputMessage);
                     if (logger.getDebugLevel() > 1)
