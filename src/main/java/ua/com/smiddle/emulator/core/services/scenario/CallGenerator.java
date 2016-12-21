@@ -21,8 +21,8 @@ import java.util.stream.Collectors;
  * @project emulator
  */
 @Component
-public class Scenario extends Thread {
-    private final String module = "Scenario";
+public class CallGenerator extends Thread {
+    private final String module = "CallGenerator";
     @Autowired
     @Qualifier("CallsProcessorImpl")
     private CallsProcessor callsProcessor;
@@ -64,7 +64,6 @@ public class Scenario extends Thread {
                     logger.logMore_0(module, "run: throws Exception=" + e.getMessage());
             }
         }
-
     }
 
     public void makeCallByAgentEvent(AgentDescriptor agentDescriptor) {

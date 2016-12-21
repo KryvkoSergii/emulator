@@ -18,7 +18,7 @@ import ua.com.smiddle.emulator.core.model.CallState;
 import ua.com.smiddle.emulator.core.model.UnknownFields;
 import ua.com.smiddle.emulator.core.pool.Pools;
 import ua.com.smiddle.emulator.core.services.processing.agentstates.AgentStateProcessor;
-import ua.com.smiddle.emulator.core.services.statistic.Statistic;
+import ua.com.smiddle.emulator.core.services.scenario.ScenarioProcessor;
 import ua.com.smiddle.emulator.core.util.LoggerUtil;
 
 import java.util.ArrayList;
@@ -47,9 +47,12 @@ public class CallsProcessorImpl implements CallsProcessor {
     @Autowired
     @Qualifier("AgentStateProcessorImpl")
     private AgentStateProcessor agentStateProcessor;
+    //    @Autowired
+//    @Qualifier("Statistic")
+//    private Statistic statistic;
     @Autowired
-    @Qualifier("Statistic")
-    private Statistic statistic;
+    @Qualifier("ScenarioProcessorImpl")
+    private ScenarioProcessor scenarioProcessor;
     private final AtomicInteger connectionCallId = new AtomicInteger(100);
     //improvement of performance and stability
     private final Set<String> agentsIdWhoHasCall = ConcurrentHashMap.newKeySet();
@@ -120,8 +123,7 @@ public class CallsProcessorImpl implements CallsProcessor {
             agentStateProcessor.sendMessageToAllSubscribers(callDeliveredEvent.serializeMessage());
             CallDescriptor callDescriptor = pool.getCallsHolder().get(connectionCallId);
             callDescriptor.setCallState(CallState.DELIVERED_CALL);
-
-            statistic.logCallStatistic(callDescriptor);
+            scenarioProcessor.onACDCall(callDescriptor);
             if (logger.getDebugLevel() > 1) {
                 logger.logMore_1(module, directionOut + callDeliveredEvent.toString());
                 logger.logMore_1(module, "processIncomingACDCall: process connectionCallId=" + connectionCallId + " for agent=" + ad.getAgentID());
@@ -157,6 +159,7 @@ public class CallsProcessorImpl implements CallsProcessor {
         if (logger.getDebugLevel() > 1)
             logger.logMore_1(module, directionOut + callEstablishedEvent.toString());
         callDescriptor.setCallState(CallState.ACTIVE_CALL);
+        scenarioProcessor.onAgentCallAnswer();
         statistic.logCallStatistic(callDescriptor);
     }
 
