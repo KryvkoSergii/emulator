@@ -11,6 +11,8 @@ import ua.com.smiddle.emulator.core.pool.Pools;
 import ua.com.smiddle.emulator.core.services.statistic.Statistic;
 import ua.com.smiddle.emulator.core.util.LoggerUtil;
 
+import javax.annotation.PostConstruct;
+
 /**
  * @author ksa on 21.12.16.
  * @project emulator
@@ -33,6 +35,11 @@ public class ScenarioProcessorImpl implements ScenarioProcessor {
     private boolean enabledScheduledCall;
     private boolean enabledAgentEventCall;
 
+    @PostConstruct
+    private void init() {
+        logger.logAnyway(module, "initialized");
+        updateSettings();
+    }
 
     @Override
     public void onAgentStateChange(AgentDescriptor agentDescriptor) {
@@ -64,12 +71,17 @@ public class ScenarioProcessorImpl implements ScenarioProcessor {
 
     @Override
     public void onAgentCallAnswer(CallDescriptor callDescriptor) {
-
+        statistic.logCallStatistic(callDescriptor);
     }
 
     @Override
-    public void onAgentCallClear() {
+    public void onAgentCallDrop(CallDescriptor callDescriptor) {
+        statistic.logCallStatistic(callDescriptor);
+    }
 
+    @Override
+    public void onClientCallDrop(CallDescriptor callDescriptor) {
+        statistic.logCallStatistic(callDescriptor);
     }
 
     private void updateSettings() {

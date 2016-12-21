@@ -113,14 +113,6 @@ public class Statistic {
             logger.logMore_0(module, marker + ": cleared Agent Statistic");
     }
 
-    //    @Scheduled(fixedDelay = -1, fixedRate = 60 * 1000)
-//    private void printProcessedCalls() {
-//        String s4 = "";
-//        if (callDescriptors.size() > 0)
-//            s4 = " callsHolder=" + callDescriptors.stream().map(CallDescriptor::toString).reduce(" ", String::concat);
-//        logger.logMore_1(module, "callsHolder: callsHolder size=" + callDescriptors.size() + s4);
-//    }
-
     @Scheduled(fixedDelay = -1, fixedRate = 2 * 60 * 1000)
     private void clearAgentStatisticScheduled() {
         if (System.currentTimeMillis() - lastCleared > 5 * 60 * 1000) {

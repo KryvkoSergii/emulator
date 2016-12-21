@@ -159,8 +159,7 @@ public class CallsProcessorImpl implements CallsProcessor {
         if (logger.getDebugLevel() > 1)
             logger.logMore_1(module, directionOut + callEstablishedEvent.toString());
         callDescriptor.setCallState(CallState.ACTIVE_CALL);
-        scenarioProcessor.onAgentCallAnswer();
-        statistic.logCallStatistic(callDescriptor);
+        scenarioProcessor.onAgentCallAnswer(callDescriptor);
     }
 
     @Async(value = "threadPoolSender")
@@ -169,13 +168,13 @@ public class CallsProcessorImpl implements CallsProcessor {
         agentStateProcessor.sendMessageToAllSubscribers(clearCallConf.serializeMessage());
         if (logger.getDebugLevel() > 1)
             logger.logMore_1(module, directionOut + clearCallConf.toString());
-        processCallEnd(req.getConnectionCallID());
+        processCallEnd(req.getConnectionCallID(), 1);
     }
 
     @Async(value = "threadPoolSender")
     public void processACDCallsEndByCustomer(int connectionCallId) {
         try {
-            processCallEnd(connectionCallId);
+            processCallEnd(connectionCallId, 0);
         } catch (Exception e) {
             if (logger.getDebugLevel() > 1)
                 logger.logMore_1(module, "processACDCallsEndByCustomer: throw Exception=" + e.getMessage());
@@ -184,7 +183,13 @@ public class CallsProcessorImpl implements CallsProcessor {
 
 
     //===============PRIVATE METHODS================================
-    private void processCallEnd(int connectionCallId) throws Exception {
+
+    /**
+     * @param connectionCallId
+     * @param reason           0 - drop by customer, 1 - drop by agent
+     * @throws Exception
+     */
+    private void processCallEnd(int connectionCallId, int reason) throws Exception {
         CallDescriptor callDescriptor = pool.getCallsHolder().get(connectionCallId);
         AgentDescriptor ad = callDescriptor.getAgentDescriptor();
 
@@ -205,10 +210,16 @@ public class CallsProcessorImpl implements CallsProcessor {
         agentStateProcessor.sendMessageToAllSubscribers(endCallEvent.serializeMessage());
         if (logger.getDebugLevel() > 1)
             logger.logMore_1(module, directionOut + endCallEvent.toString());
-
         callDescriptor.setCallState(CallState.CLEARED_CALL);
         callDescriptor.setCallStart(duration);
-        statistic.logCallStatistic(callDescriptor);
+
+        //script processing
+        switch (reason) {
+            case 0:
+                scenarioProcessor.onClientCallDrop(callDescriptor);
+            case 1:
+                scenarioProcessor.onAgentCallDrop(callDescriptor);
+        }
         removeCalls(callDescriptor.getConnectionCallID());
     }
 

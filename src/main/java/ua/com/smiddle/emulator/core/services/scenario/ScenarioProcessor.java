@@ -12,5 +12,6 @@ public interface ScenarioProcessor {
     void onACDCall(CallDescriptor callDescriptor);
     void onAgentCallMake();
     void onAgentCallAnswer(CallDescriptor callDescriptor);
-    void onAgentCallClear();
+    void onAgentCallDrop(CallDescriptor callDescriptor);
+    void onClientCallDrop(CallDescriptor callDescriptor);
 }
