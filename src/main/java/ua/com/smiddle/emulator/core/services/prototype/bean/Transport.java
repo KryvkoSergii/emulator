@@ -2,6 +2,9 @@ package ua.com.smiddle.emulator.core.services.prototype.bean;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.env.Environment;
+import ua.com.smiddle.cti.messages.model.messages.CTI;
+import ua.com.smiddle.emulator.core.pool.Pools;
 import ua.com.smiddle.emulator.core.util.LoggerUtil;
 
 import javax.annotation.PostConstruct;
@@ -20,6 +23,8 @@ import java.util.concurrent.LinkedBlockingQueue;
  * @project emulator
  */
 public class Transport extends Thread {
+    //0 - different queues in different Server Connections, 1 - one queue for all Server Connections
+    private byte messageQueueType;
     private static final String module = "Transport";
     private BlockingQueue<byte[]> input;
     private BlockingQueue<byte[]> output;
@@ -27,16 +32,24 @@ public class Transport extends Thread {
     private int errorCount = 0;
     private boolean isDone;
     private int port = 0;
-    private long lastIncommingMessage;
+    private int msgLen;
+    private byte[] messagePart;
+    private long lastIncomingMessage;
+    private volatile boolean openReqDetected = false;
+    private volatile boolean closeReqDetected = false;
     @Autowired
     @Qualifier("LoggerUtil")
     private LoggerUtil logger;
+    @Autowired
+    @Qualifier("Pools")
+    private Pools pools;
+    @Autowired
+    private Environment env;
     private Sender sender;
 
 
     //Constructors
     public Transport() {
-        input = new LinkedBlockingQueue<>();
         output = new LinkedBlockingQueue<>();
     }
 
@@ -74,8 +87,24 @@ public class Transport extends Thread {
         isDone = done;
     }
 
-    public long getLastIncommingMessage() {
-        return lastIncommingMessage;
+    public long getLastIncomingMessage() {
+        return lastIncomingMessage;
+    }
+
+    public boolean isCloseReqDetected() {
+        return closeReqDetected;
+    }
+
+    public void setCloseReqDetected(boolean closeReqDetected) {
+        this.closeReqDetected = closeReqDetected;
+    }
+
+    public boolean isOpenReqDetected() {
+        return openReqDetected;
+    }
+
+    public void setOpenReqDetected(boolean openReqDetected) {
+        this.openReqDetected = openReqDetected;
     }
 
 
@@ -83,6 +112,11 @@ public class Transport extends Thread {
     @PostConstruct
     private void init() {
         logger.logAnyway(module, "initialized...");
+        messageQueueType = Byte.valueOf(env.getProperty("connector.transport.queuetype"));
+        if (messageQueueType == 0)
+            input = new LinkedBlockingQueue<>(10000);
+        else
+            input = pools.getInputMessages();
     }
 
     @Override
@@ -113,37 +147,37 @@ public class Transport extends Thread {
     private void read(InputStream is, byte[] length) throws IOException {
         for (byte i = 0; i < length.length; i++)
             length[i] = (byte) is.read();
-        int l = ByteBuffer.wrap(length).getInt();
-        if (l > 5000) {
-            logger.logAnyway(module, "Buffer size = " + l);
+        msgLen = ByteBuffer.wrap(length).getInt();
+        if (msgLen > 5000) {
+            logger.logAnyway(module, "Buffer size = " + msgLen);
             destroyBean();
             return;
         }
-        byte[] messagePart = new byte[l + 8];
+        messagePart = new byte[msgLen + 8];
 
         if (true) {
             int read;
             int offset = 4;
             int len = messagePart.length - 4;
-            for (read = 0; read < (l + 4 - 1); ) {
+            for (read = 0; read < (msgLen + 4 - 1); ) {
                 offset = read + offset;
                 len = len - read;
                 read = is.read(messagePart, offset, len);
             }
-            if (read != l + 4)
-                logger.logAnyway(module, "length read=" + read + " should=" + (l + 4));
+            if (read != msgLen + 4)
+                logger.logAnyway(module, "length read=" + read + " should=" + (msgLen + 4));
         } else {
             for (int i = 4; i < messagePart.length; i++)
                 messagePart[i] = (byte) is.read();
         }
-
         System.arraycopy(length, 0, messagePart, 0, length.length);
 //            ByteBuffer buffer = ByteBuffer.allocate(length.length + messagePart.length);
 //            buffer.put(length).put(messagePart);
 //            byte[] message = buffer.array();
 //            input.add(message);
+        processBasicEvent(ByteBuffer.wrap(messagePart, 4, 4).getInt());
         input.add(messagePart);
-        lastIncommingMessage = System.currentTimeMillis();
+        lastIncomingMessage = System.currentTimeMillis();
         if (logger.getDebugLevel() > 2)
             logger.logMore_2(module, "port:" + port + ":" + "RECEIVED:" + Arrays.toString(messagePart));
     }
@@ -156,6 +190,16 @@ public class Transport extends Thread {
             if (logger.getDebugLevel() > 2)
                 logger.logMore_2(module, currentThread().getName() + ":" + "WROTE:" + Arrays.toString(b));
         }
+    }
+
+    /**
+     * Checks message types for MSG_OPEN_REQ or MSG_CLOSE_CONF messages
+     *
+     * @param msgType CTI message type
+     */
+    private void processBasicEvent(int msgType) {
+        if (msgType == CTI.MSG_OPEN_REQ) openReqDetected = true;
+        else if (msgType == CTI.MSG_CLOSE_CONF) closeReqDetected = true;
     }
 
     @PreDestroy

@@ -44,6 +44,8 @@ public class Pools {
     private AtomicInteger monitorID = new AtomicInteger(1);
     //Contains agentDescriptor with Available state
     private BlockingQueue<AgentDescriptor> agentQueueToCall = new LinkedBlockingQueue<>();
+    //Incoming messages from Transports
+    private BlockingQueue<byte[]> inputMessages = new LinkedBlockingQueue<>();
 
 
     //Getters and setters
@@ -118,6 +120,15 @@ public class Pools {
     public void setAgentQueueToCall(BlockingQueue<AgentDescriptor> agentQueueToCall) {
         this.agentQueueToCall = agentQueueToCall;
     }
+
+    public BlockingQueue<byte[]> getInputMessages() {
+        return inputMessages;
+    }
+
+    public void setInputMessages(BlockingQueue<byte[]> inputMessages) {
+        this.inputMessages = inputMessages;
+    }
+
 
 
     //Methods
