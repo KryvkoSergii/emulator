@@ -37,7 +37,7 @@ public class AgentStateProcessorImpl implements AgentStateProcessor {
     @Autowired
     @Qualifier("Pools")
     private Pools pool;
-//    @Autowired
+    //    @Autowired
 //    @Qualifier("Statistic")
 //    private Statistic statistic;
 //    @Autowired

@@ -112,7 +112,6 @@ public class ProcessorImpl extends Thread implements Processor {
         Transport transport = sd.getTransport();
         try {
             if (transport.getInput().isEmpty()) return;
-            messageReadCounter.getAndIncrement();
             byte[] inputMessage = transport.getInput().take();
             processIncomingMessage(sd, inputMessage);
         } catch (Exception e) {
@@ -125,6 +124,7 @@ public class ProcessorImpl extends Thread implements Processor {
     private void processIncomingMessage(ServerDescriptor sd, byte[] inputMessage) throws Exception {
         ByteBuffer buffer = ByteBuffer.wrap(inputMessage, 4, 8);
         int code = buffer.getInt();
+        messageReadCounter.getAndIncrement();
         switch (code) {
             case CTI.MSG_HEARTBEAT_REQ: {
                 HeartbeatReq heartbeatReq = HeartbeatReq.deserializeMessage(inputMessage);
