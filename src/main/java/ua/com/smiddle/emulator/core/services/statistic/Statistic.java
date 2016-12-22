@@ -2,6 +2,7 @@ package ua.com.smiddle.emulator.core.services.statistic;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import ua.com.smiddle.emulator.AgentDescriptor;
@@ -12,7 +13,6 @@ import ua.com.smiddle.emulator.core.util.LoggerUtil;
 
 import javax.annotation.PostConstruct;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -28,11 +28,14 @@ public class Statistic {
     @Autowired
     @Qualifier("LoggerUtil")
     private LoggerUtil logger;
+    @Autowired
+    private Environment env;
     private final String module = "Statistic";
     //    private List<CallDescriptor> callDescriptors = Collections.synchronizedList(new ArrayList<>());
     private Map<Long, AgentStatistic> agentStatistic = new ConcurrentHashMap<>();
     private AtomicLong agentStatisticIdGenerator = new AtomicLong(1000);
     private volatile long lastCleared = 0;
+    private boolean statisticEnabled;
 
 
     //Getters and setters
@@ -56,26 +59,16 @@ public class Statistic {
     //Methods
     @PostConstruct
     private void init() {
-        logger.logAnyway(module, "initialized...");
+        statisticEnabled = Boolean.parseBoolean(env.getProperty("connector.statistic.enabled"));
+        logger.logAnyway(module, "initialized: statisticEnabled=" + statisticEnabled);
     }
 
     public void logAgentStatistic(AgentDescriptor agentDescriptor) {
+        if (!statisticEnabled) return;
         AgentStatistic agentStatistic = getAgentStatistic().get(agentDescriptor.getAgentStatisticId());
         long id;
-        String instrument;
         if (agentStatistic == null) {
-            //проверка в пуле по агентскому инструменту, и поиск statisticId
-            agentStatistic = findByAgentInstrument(agentDescriptor.getAgentInstrument(), agentStatistic);
-
-            //проверка по мониторинг Id
-            if (agentStatistic == null && agentDescriptor.getMonitorID() != 0) {
-                try {
-                    instrument = findMonitorIDinPool(agentDescriptor.getMonitorID());
-                    agentStatistic = findByAgentInstrument(instrument, agentStatistic);
-                } catch (Exception e) {
-                }
-            }
-
+            agentStatistic = getAgentStatistic().get(agentDescriptor.getAgentStatisticId());
             //если statisticId нет ни в AgentStatistic, ни в agentInstrument - создается новая
             if (agentStatistic == null) {
                 id = agentStatisticIdGenerator.getAndIncrement();
@@ -87,17 +80,9 @@ public class Statistic {
         agentStatistic.getAgentStates().add(new Object[]{System.currentTimeMillis(), agentDescriptor.getState()});
     }
 
-    private AgentStatistic findByAgentInstrument(String instrument, AgentStatistic agentStatistic) {
-        if (instrument != null) {
-            AgentDescriptor tmp = pools.getInstrumentMapping().get(instrument);
-            agentStatistic = getAgentStatistic().get(tmp != null ? tmp.getAgentStatisticId() : 0);
-        }
-        return agentStatistic;
-    }
-
     public void logCallStatistic(CallDescriptor callDescriptor) {
-        long id = callDescriptor.getAgentDescriptor().getAgentStatisticId();
-        AgentStatistic as = getAgentStatistic().get(id);
+        if (!statisticEnabled) return;
+        AgentStatistic as = getAgentStatistic().get(callDescriptor.getAgentDescriptor().getAgentStatisticId());
         if (as != null)
             as.getCallsStatistic().add(new Object[]{System.currentTimeMillis(), callDescriptor.getCallState()});
         else {
@@ -120,11 +105,11 @@ public class Statistic {
         }
     }
 
-    private String findMonitorIDinPool(Integer monitorId) {
-        Optional<String> instrument = pools.getMonitorsHolder().entrySet().stream()
-                .filter(map -> monitorId.equals(map.getValue()))
-                .map(Map.Entry::getKey)
-                .findAny();
-        return instrument.get();
-    }
+//    private String findMonitorIDinPool(Integer monitorId) {
+//        Optional<String> instrument = pools.getMonitorsHolder().entrySet().stream()
+//                .filter(map -> monitorId.equals(map.getValue()))
+//                .map(Map.Entry::getKey)
+//                .findAny();
+//        return instrument.get();
+//    }
 }

@@ -231,7 +231,7 @@ public class CallsProcessorImpl implements CallsProcessor {
         c.setConnectionDeviceIDType(ConnectionDeviceIDTypes.CONNECTION_ID_STATIC);
         c.setConnectionCallID(connectionCallId);
         c.setFloatingFields(new ArrayList<>());
-        c.getFloatingFields().add(new FloatingField(Fields.TAG_CONNECTION_DEVID.getTagId(), UnknownFields.ANI));
+        c.getFloatingFields().add(new FloatingField(Fields.TAG_CONNECTION_DEVID.getTagId(), ad.getAgentInstrument()));
         return c;
     }
 
@@ -245,7 +245,7 @@ public class CallsProcessorImpl implements CallsProcessor {
         c.setLocalConnectionState(LocalConnectionState.LCS_NULL);
         c.setEventCause(EventCause.CEC_NONE);
         c.setFloatingFields(new ArrayList<>());
-        c.getFloatingFields().add(new FloatingField(Fields.TAG_CONNECTION_DEVID.getTagId(), UnknownFields.ANI));
+        c.getFloatingFields().add(new FloatingField(Fields.TAG_CONNECTION_DEVID.getTagId(), ad.getAgentInstrument()));
         return c;
     }
 
@@ -270,7 +270,7 @@ public class CallsProcessorImpl implements CallsProcessor {
         c.setLocalConnectionState(LocalConnectionState.LCS_CONNECT);
         c.setEventCause(EventCause.CEC_NONE);
         c.setFloatingFields(new ArrayList<>());
-        c.getFloatingFields().add(new FloatingField(Fields.TAG_CONNECTION_DEVID.getTagId(), UnknownFields.ANI));
+        c.getFloatingFields().add(new FloatingField(Fields.TAG_CONNECTION_DEVID.getTagId(), ad.getAgentInstrument()));
         return c;
     }
 
@@ -291,7 +291,7 @@ public class CallsProcessorImpl implements CallsProcessor {
         c.setCampaignID(UnknownFields.CampaignID);
         c.setQueryRuleID(UnknownFields.QueryRuleID);
         c.setFloatingFields(new ArrayList<>());
-        c.getFloatingFields().add(new FloatingField(Fields.TAG_CONNECTION_DEVID.getTagId(), UnknownFields.ANI));
+        c.getFloatingFields().add(new FloatingField(Fields.TAG_CONNECTION_DEVID.getTagId(), ad.getAgentInstrument()));
         c.getFloatingFields().add(new FloatingField(Fields.TAG_NEW_CONNECTION_DEVID.getTagId(), UnknownFields.ANI));
         c.getFloatingFields().add(new FloatingField(Fields.TAG_ANI.getTagId(), UnknownFields.ANI));
         return c;
@@ -320,7 +320,7 @@ public class CallsProcessorImpl implements CallsProcessor {
         c.setNumNamedVariables(UnknownFields.NumNamedVariables);
         c.setNumNamedArrays(UnknownFields.NumNamedArrays);
         c.setFloatingFields(new ArrayList<>());
-        c.getFloatingFields().add(new FloatingField(Fields.TAG_CONNECTION_DEVID.getTagId(), UnknownFields.ANI));
+        c.getFloatingFields().add(new FloatingField(Fields.TAG_CONNECTION_DEVID.getTagId(), ad.getAgentInstrument()));
         c.getFloatingFields().add(new FloatingField(Fields.TAG_ALERTING_DEVID.getTagId(), ad.getAgentInstrument()));
         c.getFloatingFields().add(new FloatingField(Fields.TAG_CALLING_DEVID.getTagId(), UnknownFields.ANI));
         c.getFloatingFields().add(new FloatingField(Fields.TAG_CALLED_DEVID.getTagId(), ad.getAgentInstrument()));
@@ -340,7 +340,7 @@ public class CallsProcessorImpl implements CallsProcessor {
         c.setConnectionCallID(connectionCallId);
         c.setCalledPartyDisposition(UnknownFields.CalledPartyDisposition);
         c.setFloatingFields(new ArrayList<>());
-        c.getFloatingFields().add(new FloatingField(Fields.TAG_CONNECTION_DEVID.getTagId(), UnknownFields.ANI));
+        c.getFloatingFields().add(new FloatingField(Fields.TAG_CONNECTION_DEVID.getTagId(), ad.getAgentInstrument()));
         c.getFloatingFields().add(new FloatingField(Fields.TAG_ANI.getTagId(), UnknownFields.ANI));
         c.getFloatingFields().add(new FloatingField(Fields.TAG_DNIS.getTagId(), ad.getAgentInstrument()));
         c.getFloatingFields().add(new FloatingField(Fields.TAG_DIALED_NUMBER.getTagId(), UnknownFields.IVR));
