@@ -88,6 +88,8 @@ public class Pools {
     }
 
     public int getMonitorIDAndIncrement() {
+        if (monitorID.get() > Integer.MAX_VALUE - 300)
+            monitorID.set(100);
         return monitorID.getAndIncrement();
     }
 
