@@ -31,7 +31,7 @@ import javax.annotation.PreDestroy;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author srg on 22.11.16.
@@ -57,12 +57,12 @@ public class ProcessorImpl extends Thread implements Processor {
     @Autowired
     private Environment env;
     private byte messageQueueType;
-    private final AtomicInteger messageReadCounter = new AtomicInteger();
+    private final AtomicLong messageReadCounter = new AtomicLong();
     private BlockingQueue<byte[]> input;
 
 
     //Getters ang setters
-    public AtomicInteger getMessageReadCounter() {
+    public AtomicLong getMessageReadCounter() {
         return messageReadCounter;
     }
 

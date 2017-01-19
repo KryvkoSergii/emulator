@@ -2,7 +2,7 @@ package ua.com.smiddle.emulator.core.services.processing.agentstates;
 
 import ua.com.smiddle.emulator.AgentDescriptor;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author ksa on 02.12.16.
@@ -34,6 +34,6 @@ public interface AgentStateProcessor {
      */
     void sendMessageToAllSubscribers(byte[] message);
 
-    AtomicInteger getMessageWroteCounter();
+    AtomicLong getMessageWroteCounter();
 
 }

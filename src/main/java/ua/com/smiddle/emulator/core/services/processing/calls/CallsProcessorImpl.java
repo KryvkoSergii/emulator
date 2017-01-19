@@ -47,9 +47,6 @@ public class CallsProcessorImpl implements CallsProcessor {
     @Autowired
     @Qualifier("AgentStateProcessorImpl")
     private AgentStateProcessor agentStateProcessor;
-    //    @Autowired
-//    @Qualifier("Statistic")
-//    private Statistic statistic;
     @Autowired
     @Qualifier("ScenarioProcessorImpl")
     private ScenarioProcessor scenarioProcessor;
@@ -60,14 +57,17 @@ public class CallsProcessorImpl implements CallsProcessor {
 
     //===============METHODS================================
     public void generateCallForAgent(AgentDescriptor ad) {
+        checkConnectionCallIdCounter();
         int callId = connectionCallId.getAndIncrement();
         processIncomingACDCall(callId, ad);
         if (logger.getDebugLevel() > 1)
             logger.logMore_1(module, "generateCallForAgent: generate call for AgentID=" + ad.getAgentID() + " callID=" + callId);
     }
 
+
     @Deprecated
     public void processIncomingACDCallList() {
+        checkConnectionCallIdCounter();
         int init = connectionCallId.get();
         pool.getAgentMapping().values().stream()
                 .filter(agentDescriptor -> agentDescriptor.getState() == AgentStates.AGENT_STATE_AVAILABLE)
@@ -131,6 +131,7 @@ public class CallsProcessorImpl implements CallsProcessor {
             return;
         } catch (Exception e) {
             logger.logAnyway(module, "processIncomingACDCall: for agent=" + ad.getAgentID() + " throw Exception=" + e.getMessage());
+            e.printStackTrace();
         }
         if (logger.getDebugLevel() > 1)
             logger.logMore_1(module, "processIncomingACDCall: unable find agent for connectionCallId=" + connectionCallId);
@@ -366,9 +367,8 @@ public class CallsProcessorImpl implements CallsProcessor {
         }
     }
 
-//    @Deprecated
-//    private void putProcessedCallsToStatistic(CallDescriptor cd) {
-//        cd.setAgentDescriptor(null);
-//        statistic.getCallDescriptors().add(cd);
-//    }
+    private void checkConnectionCallIdCounter() {
+        if (connectionCallId.get() > Integer.MAX_VALUE - 300)
+            connectionCallId.set(100);
+    }
 }

@@ -19,7 +19,7 @@ import ua.com.smiddle.emulator.core.services.scenario.ScenarioProcessor;
 import ua.com.smiddle.emulator.core.util.LoggerUtil;
 
 import javax.annotation.PostConstruct;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author ksa on 02.12.16.
@@ -37,17 +37,10 @@ public class AgentStateProcessorImpl implements AgentStateProcessor {
     @Autowired
     @Qualifier("Pools")
     private Pools pool;
-    //    @Autowired
-//    @Qualifier("Statistic")
-//    private Statistic statistic;
-//    @Autowired
-//    private Environment env;
-//    private boolean enabledScheduledCall;
-//    private boolean enabledAgentEventCall;
     @Autowired
     @Qualifier("ScenarioProcessorImpl")
     private ScenarioProcessor scenarioProcessor;
-    private final AtomicInteger messageWroteCounter = new AtomicInteger();
+    private final AtomicLong messageWroteCounter = new AtomicLong();
 
 
     //Constructors
@@ -56,7 +49,7 @@ public class AgentStateProcessorImpl implements AgentStateProcessor {
 
 
     //Getters and setters
-    public AtomicInteger getMessageWroteCounter() {
+    public AtomicLong getMessageWroteCounter() {
         return messageWroteCounter;
     }
 
@@ -82,7 +75,6 @@ public class AgentStateProcessorImpl implements AgentStateProcessor {
             case AGENT_STATE_LOGIN: {
                 AgentStateEvent ase = buildAgentStateEvent(agentDescriptor);
                 sendMessageToAllSubscribers(ase.serializeMessage());
-//                statistic.logAgentStatistic(agentDescriptor);
                 if (logger.getDebugLevel() > 1)
                     logger.logMore_1(module, directionOut + ase);
                 scenarioProcessor.onAgentStateChange(agentDescriptor);
@@ -90,27 +82,9 @@ public class AgentStateProcessorImpl implements AgentStateProcessor {
                 processAgentStateEvent(agentDescriptor);
                 break;
             }
-//            case AGENT_STATE_AVAILABLE: {
-//                AgentStateEvent ase = buildAgentStateEvent(agentDescriptor);
-//                sendMessageToAllSubscribers(ase.serializeMessage());
-////                statistic.logAgentStatistic(agentDescriptor);
-//                if (logger.getDebugLevel() > 1)
-//                    logger.logMore_1(module, directionOut + ase);
-////                if (enabledAgentEventCall) {
-////                    agentDescriptor = pool.getInstrumentMapping().get(agentDescriptor.getAgentInstrument() != null ? agentDescriptor.getAgentInstrument() : "");
-////                    if (agentDescriptor != null)
-////                        pool.getAgentQueueToCall().put(agentDescriptor);
-////                    else {
-////                        if (logger.getDebugLevel() > 1)
-////                            logger.logMore_0(module, "unable identified agent by instrument to generate new call");
-////                    }
-////                }
-//                break;
-//            }
             case AGENT_STATE_LOGOUT: {
                 AgentStateEvent ase = buildAgentStateEvent(agentDescriptor);
                 sendMessageToAllSubscribers(ase.serializeMessage());
-//                statistic.logAgentStatistic(agentDescriptor);
                 if (logger.getDebugLevel() > 1)
                     logger.logMore_1(module, directionOut + ase);
                 scenarioProcessor.onAgentStateChange(agentDescriptor);
@@ -120,7 +94,6 @@ public class AgentStateProcessorImpl implements AgentStateProcessor {
             default: {
                 AgentStateEvent ase = buildAgentStateEvent(agentDescriptor);
                 sendMessageToAllSubscribers(ase.serializeMessage());
-//                statistic.logAgentStatistic(agentDescriptor);
                 if (logger.getDebugLevel() > 1)
                     logger.logMore_1(module, directionOut + ase);
                 scenarioProcessor.onAgentStateChange(agentDescriptor);
@@ -243,8 +216,4 @@ public class AgentStateProcessorImpl implements AgentStateProcessor {
         return fromPool != null ? fromPool : tmpAgent;
     }
 
-//    private void updateSettings() {
-//        enabledScheduledCall = Boolean.valueOf(env.getProperty("connector.generate.scheduled.call"));
-//        enabledAgentEventCall = Boolean.valueOf(env.getProperty("connector.generate.agentevent.call"));
-//    }
 }
