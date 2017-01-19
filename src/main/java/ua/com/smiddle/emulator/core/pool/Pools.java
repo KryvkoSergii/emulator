@@ -57,12 +57,14 @@ public class Pools {
         this.clientConnectionHolder = clientConnectionHolder;
     }
 
-    public AtomicInteger getMonitoringID() {
-        return monitoringID;
+    public int getMonitoringID() {
+        return monitoringID.get();
     }
 
-    public void setMonitoringID(AtomicInteger monitoringID) {
-        this.monitoringID = monitoringID;
+    public int getMonitoringIDAndIncrement() {
+        if (monitoringID.get() > Integer.MAX_VALUE - 300)
+            monitoringID.set(100);
+        return monitoringID.getAndIncrement();
     }
 
     public Map<String, AgentDescriptor> getInstrumentMapping() {
@@ -81,12 +83,12 @@ public class Pools {
         this.monitorsHolder = monitorsHolder;
     }
 
-    public AtomicInteger getMonitorID() {
-        return monitorID;
+    public int getMonitorID() {
+        return monitorID.get();
     }
 
-    public void setMonitorID(AtomicInteger monitorID) {
-        this.monitorID = monitorID;
+    public int getMonitorIDAndIncrement() {
+        return monitorID.getAndIncrement();
     }
 
     public Map<String, AgentDescriptor> getAgentMapping() {
@@ -130,7 +132,6 @@ public class Pools {
     }
 
 
-
     //Methods
     @Scheduled(initialDelay = 5 * 1000, fixedDelay = 5 * 1000)
     private void getPoolsState() {
@@ -160,7 +161,7 @@ public class Pools {
             logger.logMore_2(module, "callsHolder: callsHolder size=" + callsHolder.size() + s5);
         }
 
-        if (logger.getDebugLevel()>1) {
+        if (logger.getDebugLevel() > 1) {
             logger.logMore_1(module, "getPoolsState: agentMapping size=" + agentMapping.size() + s1);
             logger.logMore_1(module, "getPoolsState: instrumentMapping size=" + instrumentMapping.size() + s2);
             logger.logMore_1(module, "getPoolsState: monitorsHolder size=" + monitorsHolder.size() + s3);

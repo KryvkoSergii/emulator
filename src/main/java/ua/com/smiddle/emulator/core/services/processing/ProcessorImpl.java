@@ -256,7 +256,7 @@ public class ProcessorImpl extends Thread implements Processor {
     private void processMONITOR_START_REQ(Object message) throws Exception {
         MonitorStartReq monitorStartReq = (MonitorStartReq) message;
         MonitorStartConf monitorStartConf = new MonitorStartConf();
-        Integer monitorID = pool.getMonitorID().getAndIncrement();
+        Integer monitorID = pool.getMonitorIDAndIncrement();
         monitorStartConf.setInvokeId(monitorStartReq.getInvokeId());
         monitorStartConf.setMonitorId(monitorID);
         agentStateProcessor.sendMessageToAllSubscribers(monitorStartConf.serializeMessage());
