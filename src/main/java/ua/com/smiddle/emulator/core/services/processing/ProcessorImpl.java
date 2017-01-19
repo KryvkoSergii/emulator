@@ -124,6 +124,8 @@ public class ProcessorImpl extends Thread implements Processor {
     private void processIncomingMessage(ServerDescriptor sd, byte[] inputMessage) throws Exception {
         ByteBuffer buffer = ByteBuffer.wrap(inputMessage, 4, 8);
         int code = buffer.getInt();
+        if (messageReadCounter.get() > Long.MAX_VALUE - 300)
+            messageReadCounter.set(1);
         messageReadCounter.getAndIncrement();
         switch (code) {
             case CTI.MSG_HEARTBEAT_REQ: {
@@ -238,7 +240,7 @@ public class ProcessorImpl extends Thread implements Processor {
                 }
             }
         }
-        Integer monitoringID = pool.getMonitoringID().getAndIncrement();
+        Integer monitoringID = pool.getMonitoringIDAndIncrement();
         OpenConf openConf = new OpenConf();
         openConf.setInvokeId(openReq.getInvokeId());
         openConf.setServicesGranted(0x26);

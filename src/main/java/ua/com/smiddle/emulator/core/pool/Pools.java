@@ -63,7 +63,7 @@ public class Pools {
 
     public int getMonitoringIDAndIncrement() {
         if (monitoringID.get() > Integer.MAX_VALUE - 300)
-            monitoringID.set(100);
+            monitoringID.set(1);
         return monitoringID.getAndIncrement();
     }
 
@@ -89,7 +89,7 @@ public class Pools {
 
     public int getMonitorIDAndIncrement() {
         if (monitorID.get() > Integer.MAX_VALUE - 300)
-            monitorID.set(100);
+            monitorID.set(1);
         return monitorID.getAndIncrement();
     }
 
