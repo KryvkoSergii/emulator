@@ -40,7 +40,7 @@ public class Application extends WebMvcConfigurerAdapter {
     @Bean(name = "threadPoolSender")
     public Executor threadPoolTaskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(4);
+        executor.setCorePoolSize(10);
         executor.setMaxPoolSize(50);
         executor.setQueueCapacity(700);
         executor.setThreadNamePrefix("EventSenderThread-");

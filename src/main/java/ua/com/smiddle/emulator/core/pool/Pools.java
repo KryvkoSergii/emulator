@@ -35,7 +35,7 @@ public class Pools {
     private Map<Integer, CallDescriptor> callsHolder = new ConcurrentHashMap();
     //<AgentInstrument,MonitorID> MONITOR_START_REQ
     private Map<String, Integer> monitorsHolder = new ConcurrentHashMap();
-    //<AgentInstrument,ServerDescriptor>
+    //<AgentInstrument,AgentDescriptor>
     private Map<String, AgentDescriptor> instrumentMapping = new ConcurrentHashMap();
     //<AgentID,ServerDescriptor>
     private Map<String, AgentDescriptor> agentMapping = new ConcurrentHashMap();

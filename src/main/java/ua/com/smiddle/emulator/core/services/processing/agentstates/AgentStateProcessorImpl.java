@@ -114,24 +114,30 @@ public class AgentStateProcessorImpl implements AgentStateProcessor {
     @Override
     public void processSetAgentStateReq(Object message) throws Exception {
 //        Transport transport = sd.getTransport();
-        AgentDescriptor tmpAgent = new AgentDescriptor();
-        SetAgentStateReq setAgentStateReq = (SetAgentStateReq) message;
-        for (FloatingField ff : setAgentStateReq.getFloatingFields()) {
-            if (ff.getTag() == Fields.TAG_AGENT_INSTRUMENT.getTagId())
-                //обработка инструмента
-                tmpAgent.setAgentInstrument(ff.getData());
-            else if (ff.getTag() == Fields.TAG_AGENT_ID.getTagId())
-                //обработка AgentID
-                tmpAgent.setAgentID(ff.getData());
+        AgentDescriptor tmpAgent = null;
+        try {
+            tmpAgent = new AgentDescriptor();
+            SetAgentStateReq setAgentStateReq = (SetAgentStateReq) message;
+            for (FloatingField ff : setAgentStateReq.getFloatingFields()) {
+                if (ff.getTag() == Fields.TAG_AGENT_INSTRUMENT.getTagId())
+                    //обработка инструмента
+                    tmpAgent.setAgentInstrument(ff.getData());
+                else if (ff.getTag() == Fields.TAG_AGENT_ID.getTagId())
+                    //обработка AgentID
+                    tmpAgent.setAgentID(ff.getData());
+            }
+            tmpAgent.setState(setAgentStateReq.getAgentState());
+            tmpAgent = updateAgentInPools(tmpAgent);
+            SetAgentStateConf setAgentStateConf = new SetAgentStateConf();
+            setAgentStateConf.setInvokeID(setAgentStateReq.getInvokeID());
+            sendMessageToAllSubscribers(setAgentStateConf.serializeMessage());
+            if (logger.getDebugLevel() > 1)
+                logger.logMore_1(module, directionOut + "processSetAgentStateReq: prepared " + setAgentStateConf);
+            processAgentStateEvent(tmpAgent);
+        } catch (Exception e) {
+            System.out.println(tmpAgent);
+            e.printStackTrace();
         }
-        tmpAgent.setState(setAgentStateReq.getAgentState());
-        tmpAgent = updateAgentInPools(tmpAgent);
-        SetAgentStateConf setAgentStateConf = new SetAgentStateConf();
-        setAgentStateConf.setInvokeID(setAgentStateReq.getInvokeID());
-        sendMessageToAllSubscribers(setAgentStateConf.serializeMessage());
-        if (logger.getDebugLevel() > 1)
-            logger.logMore_1(module, directionOut + "processSetAgentStateReq: prepared " + setAgentStateConf);
-        processAgentStateEvent(tmpAgent);
     }
 
     @Override
@@ -166,14 +172,19 @@ public class AgentStateProcessorImpl implements AgentStateProcessor {
     }
 
     private void removeAgentInPools(AgentDescriptor tmpAgent) {
-        AgentDescriptor inPools = null;
+//        AgentDescriptor inPools = null;
         if (tmpAgent.getAgentInstrument() != null)
-            inPools = pool.getInstrumentMapping().remove(tmpAgent.getAgentInstrument());
-        if (inPools != null) pool.getAgentMapping().remove(inPools.getAgentID());
-        else if (tmpAgent.getAgentID() != null)
+//            inPools =
+            pool.getInstrumentMapping().remove(tmpAgent.getAgentInstrument());
+
+//        if (inPools != null && inPools.getAgentID() != null) pool.getAgentMapping().remove(inPools.getAgentID());
+//        else
+
+        if (tmpAgent.getAgentID() != null)
             pool.getAgentMapping().remove(tmpAgent.getAgentID());
 //        if (tmpAgent.getMonitorID() != null)
 //            pool.getMonitorsHolder().remove(tmpAgent.getMonitorID());
+
         if (logger.getDebugLevel() > 2)
             logger.logMore_2(module, "removed for=" + tmpAgent.getAgentID() + " " + tmpAgent.getAgentInstrument());
     }
@@ -192,10 +203,13 @@ public class AgentStateProcessorImpl implements AgentStateProcessor {
         //update InstrumentMapping
         if (tmpAgent.getAgentInstrument() != null) {
             if ((fromPool = pool.getInstrumentMapping().get(tmpAgent.getAgentInstrument())) != null) {
-                fromPool.setAgentInstrument(tmpAgent.getAgentInstrument());
-                if (tmpAgent.getAgentID() != null)
-                    fromPool.setAgentID(tmpAgent.getAgentID());
-                fromPool.setMonitorID(tmpAgent.getMonitorID());
+//предположительно обновление не требуется
+//                fromPool.setAgentInstrument(tmpAgent.getAgentInstrument());
+//                if (tmpAgent.getAgentID() != null)
+//                    fromPool.setAgentID(tmpAgent.getAgentID());
+//                if (tmpAgent.getMonitorID() != 0)
+//                    fromPool.setMonitorID(tmpAgent.getMonitorID());
+                //только сосотояния
                 fromPool.setState(tmpAgent.getState());
                 if (logger.getDebugLevel() > 1)
                     logger.logMore_1(module, "updateAgentInPools: updated in InstrumentMapping=" + fromPool.toString());
